@@ -41,6 +41,15 @@ app.include_router(jobs.router, prefix=f"{settings.API_V1_STR}/jobs", tags=["Job
 app.include_router(profiles.router, prefix=f"{settings.API_V1_STR}/profiles", tags=["Profiles"])
 app.include_router(applications.router, prefix=f"{settings.API_V1_STR}/applications", tags=["Applications"])
 
+@app.get("/", tags=["Health"])
+def root():
+    return {
+        "service": "HireAI API",
+        "status": "running",
+        "health": "/health",
+        "docs": "/docs"
+    }
+
 @app.get("/health", tags=["Health"])
 def health_check():
     from app.core.database import SessionLocal
