@@ -50,6 +50,10 @@ def root():
         "docs": "/docs"
     }
 
+@app.head("/", tags=["Health"])
+def root_head():
+    return {}
+
 @app.get("/health", tags=["Health"])
 def health_check():
     from app.core.database import SessionLocal
@@ -64,6 +68,10 @@ def health_check():
         "service": settings.PROJECT_NAME,
         "database": database_status
     }
+
+@app.head("/health", tags=["Health"])
+def health_head():
+    return health_check()
 
 if __name__ == "__main__":
     import uvicorn
