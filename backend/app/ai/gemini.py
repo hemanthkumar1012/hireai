@@ -1,7 +1,7 @@
 import json
 import logging
-import google.generativeai as genai
 from typing import List, Dict, Any
+from google import genai
 from app.ai.service import AIService
 from app.ai.mock import MockAIService
 
@@ -10,19 +10,18 @@ logger = logging.getLogger(__name__)
 class GeminiAIService(AIService):
     def __init__(self, api_key: str):
         self.api_key = api_key
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.client = genai.Client(api_key=self.api_key)
         self.mock_fallback = MockAIService()
 
     def _generate_json(self, prompt: str, fallback_data: Any) -> Any:
         try:
-            response = self.model.generate_content(
-                prompt,
-                generation_config={"response_mime_type": "application/json"}
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash", contents=prompt,
+                config={"response_mime_type": "application/json"}
             )
             return json.loads(response.text)
-        except Exception as e:
-            logger.error(f"Gemini API error: {e}. Falling back to mock service.")
+        except Exception:
+            logger.exception("Gemini generation failed; using the configured fallback")
             return fallback_data
 
     def parse_resume(self, resume_text: str) -> Dict[str, Any]:

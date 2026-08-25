@@ -68,3 +68,17 @@ def test_register_and_login(client):
         }
     )
     assert bad_login.status_code == 400
+
+
+def test_public_registration_cannot_create_admin(client):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "admin-attempt@test.com",
+            "password": "password123",
+            "first_name": "Attempted",
+            "last_name": "Admin",
+            "role": "ADMIN",
+        },
+    )
+    assert response.status_code == 403

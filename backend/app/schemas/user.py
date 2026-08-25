@@ -1,12 +1,12 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 class UserBase(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    role: str = "JOB_SEEKER"  # "JOB_SEEKER", "RECRUITER", "ADMIN"
+    role: Literal["JOB_SEEKER", "RECRUITER", "ADMIN"] = "JOB_SEEKER"
 
     @property
     def full_name(self) -> str:
@@ -18,8 +18,10 @@ class UserCreate(UserBase):
     @field_validator('password')
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
-        if len(v) < 6:
-            raise ValueError('Password must be at least 6 characters long')
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        if len(v) > 128:
+            raise ValueError('Password must be 128 characters or fewer')
         return v
 
 class UserUpdate(BaseModel):

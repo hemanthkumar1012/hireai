@@ -1,10 +1,29 @@
 from datetime import datetime, timedelta, timezone
+from collections import defaultdict, deque
+from threading import Lock
+import time
 from typing import Any, Union
 import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+_rate_limit_events = defaultdict(deque)
+_rate_limit_lock = Lock()
+
+
+def enforce_rate_limit(client_key: str, action: str, limit: int = 30, window_seconds: int = 60) -> None:
+    """Limit repeated authentication requests in this process."""
+    now = time.monotonic()
+    bucket_key = f"{action}:{client_key}"
+    with _rate_limit_lock:
+        events = _rate_limit_events[bucket_key]
+        while events and now - events[0] >= window_seconds:
+            events.popleft()
+        if len(events) >= limit:
+            raise ValueError("Too many requests. Please try again later.")
+        events.append(now)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)

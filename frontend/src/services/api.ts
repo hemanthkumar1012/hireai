@@ -93,6 +93,16 @@ export const jobsApi = {
     const res = await apiClient.get('/jobs/', { params: { search } });
     return res.data;
   },
+  async saved(): Promise<Job[]> {
+    const res = await apiClient.get('/jobs/saved');
+    return res.data;
+  },
+  async save(id: number): Promise<void> {
+    await apiClient.post(`/jobs/${id}/save`);
+  },
+  async unsave(id: number): Promise<void> {
+    await apiClient.delete(`/jobs/${id}/save`);
+  },
   async get(id: number): Promise<Job> {
     const res = await apiClient.get(`/jobs/${id}`);
     return res.data;

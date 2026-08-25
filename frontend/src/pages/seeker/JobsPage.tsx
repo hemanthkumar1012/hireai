@@ -10,6 +10,7 @@ import { Search, Briefcase } from 'lucide-react';
 export const JobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [seekerApps, setSeekerApps] = useState<Application[]>([]);
+  const [savedJobIds, setSavedJobIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
@@ -17,16 +18,32 @@ export const JobsPage: React.FC = () => {
 
   const fetchJobsAndApps = async (search?: string) => {
     try {
-      const [jobsRes, appsRes] = await Promise.all([
+      const [jobsRes, appsRes, savedRes] = await Promise.all([
         jobsApi.list(search),
-        applicationsApi.listSeeker()
+        applicationsApi.listSeeker(),
+        jobsApi.saved()
       ]);
       setJobs(jobsRes);
       setSeekerApps(appsRes);
+      setSavedJobIds(new Set(savedRes.map((job) => job.id)));
     } catch (err) {
       console.error("Failed to load jobs listings.", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleSave = async (jobId: number) => {
+    const saved = savedJobIds.has(jobId);
+    try {
+      if (saved) await jobsApi.unsave(jobId); else await jobsApi.save(jobId);
+      setSavedJobIds((current) => {
+        const next = new Set(current);
+        if (saved) next.delete(jobId); else next.add(jobId);
+        return next;
+      });
+    } catch (err: any) {
+      setAlert({ type: 'error', text: err.response?.data?.detail || 'Unable to update saved jobs.' });
     }
   };
 
@@ -77,6 +94,7 @@ export const JobsPage: React.FC = () => {
           <div className="relative w-full">
             <Search className="absolute left-3.5 top-3 w-3.5 h-3.5 text-slate-500" />
             <input
+              aria-label="Search jobs"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -116,6 +134,8 @@ export const JobsPage: React.FC = () => {
               onApply={handleApply}
               isApplying={applyingJobId === job.id}
               hasApplied={hasUserApplied(job.id)}
+              isSaved={savedJobIds.has(job.id)}
+              onToggleSave={handleToggleSave}
             />
           ))}
         </div>

@@ -19,7 +19,11 @@ def apply_to_job(
     current_user: User = Depends(deps.get_current_seeker)
 ):
     # Check if job exists
-    job = db.query(Job).filter(Job.id == app_in.job_id, Job.is_active == True).first()
+    job = db.query(Job).filter(
+        Job.id == app_in.job_id,
+        Job.is_active.is_(True),
+        Job.status == "PUBLISHED",
+    ).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job opening not found or inactive")
         

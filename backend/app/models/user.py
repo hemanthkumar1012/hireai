@@ -39,3 +39,4 @@ class User(Base):
     profile = relationship("JobSeekerProfile", back_populates="user", uselist=False)
     jobs = relationship("Job", back_populates="recruiter")
     applications = relationship("Application", back_populates="seeker")
+    saved_jobs = relationship("SavedJob", back_populates="seeker", cascade="all, delete-orphan")
