@@ -35,4 +35,5 @@ class Job(Base):
     recruiter = relationship("User", back_populates="jobs")
     company = relationship("Company", back_populates="jobs")
     applications = relationship("Application", back_populates="job", cascade="all, delete-orphan")
+    saved_by = relationship("SavedJob", back_populates="job", cascade="all, delete-orphan")
     skill_tags = relationship("Skill", secondary=job_skills, backref="jobs")

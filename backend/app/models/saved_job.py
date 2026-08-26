@@ -15,5 +15,5 @@ class SavedJob(Base):
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
     # Relationships
-    user = relationship("User", backref="saved_jobs")
-    job = relationship("Job", backref="saved_by")
+    user = relationship("User", back_populates="saved_jobs")
+    job = relationship("Job", back_populates="saved_by")

@@ -11,11 +11,10 @@ logger = logging.getLogger(__name__)
 
 # Auto-create tables for development convenience (especially when using SQLite)
 try:
-    Base.metadata.create_all(bind=engine)
+    if settings.ENVIRONMENT.lower() != "production":
+        Base.metadata.create_all(bind=engine)
 except Exception:
     logger.exception("Database initialization failed")
-    if settings.ENVIRONMENT.lower() == "production":
-        raise
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
