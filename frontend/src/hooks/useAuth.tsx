@@ -14,7 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>({
-    token: localStorage.getItem('hireai_token'),
+    token: localStorage.getItem('applyright_token'),
     user: null,
     isAuthenticated: false,
     isLoading: true,
@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('hireai_token');
+      const token = localStorage.getItem('applyright_token');
       if (token) {
         try {
           const user = await authApi.getMe();
@@ -34,8 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
         } catch (error) {
           console.error("Auth initialization failed, token might be expired.", error);
-          localStorage.removeItem('hireai_token');
-          localStorage.removeItem('hireai_refresh_token');
+          localStorage.removeItem('applyright_token');
+          localStorage.removeItem('applyright_refresh_token');
           setState({
             token: null,
             user: null,
@@ -55,8 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((prev) => ({ ...prev, isLoading: true }));
     try {
       const data = await authApi.login({ email, password });
-      localStorage.setItem('hireai_token', data.access_token);
-      localStorage.setItem('hireai_refresh_token', data.refresh_token);
+      localStorage.setItem('applyright_token', data.access_token);
+      localStorage.setItem('applyright_refresh_token', data.refresh_token);
       setState({
         token: data.access_token,
         user: data.user,
@@ -80,8 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         last_name: lastName,
         role
       });
-      localStorage.setItem('hireai_token', data.access_token);
-      localStorage.setItem('hireai_refresh_token', data.refresh_token);
+      localStorage.setItem('applyright_token', data.access_token);
+      localStorage.setItem('applyright_refresh_token', data.refresh_token);
       setState({
         token: data.access_token,
         user: data.user,
@@ -101,8 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.warn("Logout request to backend failed or token was already invalid.", error);
     } finally {
-      localStorage.removeItem('hireai_token');
-      localStorage.removeItem('hireai_refresh_token');
+      localStorage.removeItem('applyright_token');
+      localStorage.removeItem('applyright_refresh_token');
       setState({
         token: null,
         user: null,

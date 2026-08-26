@@ -15,7 +15,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
               <Cpu className="w-6 h-6" />
             </div>
             <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              HireAI
+              ApplyRight
             </span>
           </div>
         </div>

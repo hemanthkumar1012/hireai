@@ -1,6 +1,6 @@
 @echo off
-title HireAI Frontend
-echo Starting HireAI React Frontend...
+title ApplyRight Frontend
+echo Starting ApplyRight React Frontend...
 cd frontend
 npm run dev
 pause

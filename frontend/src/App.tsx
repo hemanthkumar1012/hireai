@@ -11,15 +11,20 @@ import { AdminPage } from './pages/AdminPage';
 // Seeker Pages
 import { SeekerDashboard } from './pages/seeker/SeekerDashboard';
 import { JobsPage } from './pages/seeker/JobsPage';
+import { JobDetailPage } from './pages/seeker/JobDetailPage';
 import { ApplicationsPage } from './pages/seeker/ApplicationsPage';
 import { ResumeIntelligence } from './pages/seeker/ResumeIntelligence';
 import { CareerInsights } from './pages/seeker/CareerInsights';
+import { ProfilePage } from './pages/seeker/ProfilePage';
+import { SavedJobsPage } from './pages/seeker/SavedJobsPage';
 
 // Recruiter Pages
 import { RecruiterDashboard } from './pages/recruiter/RecruiterDashboard';
 import { ManageJobs } from './pages/recruiter/ManageJobs';
 import { CandidatesPage } from './pages/recruiter/CandidatesPage';
 import { AnalyticsPage } from './pages/recruiter/AnalyticsPage';
+import { CompanyProfilePage } from './pages/recruiter/CompanyProfilePage';
+import { CreateJobPage } from './pages/recruiter/CreateJobPage';
 
 // Layout
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -112,10 +117,34 @@ export const App: React.FC = () => {
               }
             />
             <Route
+              path="/jobs/:id"
+              element={
+                <ProtectedRoute allowedRole="JOB_SEEKER">
+                  <JobDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/seeker/applications"
               element={
                 <ProtectedRoute allowedRole="JOB_SEEKER">
                   <ApplicationsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seeker/saved-jobs"
+              element={
+                <ProtectedRoute allowedRole="JOB_SEEKER">
+                  <SavedJobsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seeker/profile"
+              element={
+                <ProtectedRoute allowedRole="JOB_SEEKER">
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />
@@ -137,6 +166,30 @@ export const App: React.FC = () => {
             />
 
             {/* Protected Recruiter Portal subpaths */}
+            <Route
+              path="/recruiter/company"
+              element={
+                <ProtectedRoute allowedRole="RECRUITER">
+                  <CompanyProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recruiter/jobs/create"
+              element={
+                <ProtectedRoute allowedRole="RECRUITER">
+                  <CreateJobPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recruiter/jobs/:id/edit"
+              element={
+                <ProtectedRoute allowedRole="RECRUITER">
+                  <CreateJobPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/recruiter/jobs"
               element={

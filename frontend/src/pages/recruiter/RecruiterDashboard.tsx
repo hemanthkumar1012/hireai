@@ -57,8 +57,8 @@ export const RecruiterDashboard: React.FC = () => {
   const activeJobs = jobs.filter(j => j.is_active).length;
   const totalApps = applications.length;
   const shortlistedCount = shortlistedApps.length + 3; // add base mock count
-  const interviewsCount = applications.filter(a => a.status === 'interviewed').length + 1;
-  const hiredCount = applications.filter(a => a.status === 'accepted').length + 1;
+  const interviewsCount = applications.filter(a => a.status === 'INTERVIEW').length + 1;
+  const hiredCount = applications.filter(a => a.status === 'HIRED').length + 1;
   
   const avgMatch = totalApps > 0
     ? Math.round(applications.reduce((acc, app) => acc + app.match_score, 0) / totalApps)

@@ -68,3 +68,39 @@ def test_register_and_login(client):
         }
     )
     assert bad_login.status_code == 400
+
+
+def test_protected_endpoint_unauthorized(client):
+    """Accessing protected endpoint without token returns 401/403"""
+    res = client.get("/api/v1/auth/me")
+    assert res.status_code in [401, 403]
+
+
+def test_role_authorization(client):
+    """A seeker cannot create a job (recruiter-only)"""
+    # Register seeker
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "seekerauth@test.com",
+            "password": "password123",
+            "first_name": "Auth",
+            "last_name": "Seeker",
+            "role": "JOB_SEEKER"
+        }
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Seeker tries to create job — should be forbidden
+    job_res = client.post(
+        "/api/v1/jobs/",
+        json={
+            "title": "Test Job",
+            "description": "Test",
+            "company_name": "Test Co",
+            "location": "Remote",
+        },
+        headers=headers,
+    )
+    assert job_res.status_code == 403

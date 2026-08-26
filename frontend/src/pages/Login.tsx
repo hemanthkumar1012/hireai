@@ -77,7 +77,7 @@ export const Login: React.FC = () => {
       </form>
 
       <p className="mt-6 text-center text-xs text-slate-400 font-medium">
-        New to HireAI?{' '}
+        New to ApplyRight?{' '}
         <Link to="/register" className="font-bold text-indigo-400 hover:text-indigo-355">
           Create an account
         </Link>

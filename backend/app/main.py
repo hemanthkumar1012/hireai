@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, jobs, profiles, applications
+from app.models import *  # noqa: F401,F403 — ensures all models register with Base.metadata
+from app.api import auth, jobs, profiles, applications, companies
 
 # Auto-create tables for development convenience (especially when using SQLite)
 try:
@@ -12,7 +13,7 @@ except Exception as e:
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="HireAI — Intelligent Recruitment & Career Platform API",
+    description="ApplyRight — Intelligent Recruitment & Career Platform API",
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
@@ -40,6 +41,7 @@ app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Aut
 app.include_router(jobs.router, prefix=f"{settings.API_V1_STR}/jobs", tags=["Jobs"])
 app.include_router(profiles.router, prefix=f"{settings.API_V1_STR}/profiles", tags=["Profiles"])
 app.include_router(applications.router, prefix=f"{settings.API_V1_STR}/applications", tags=["Applications"])
+app.include_router(companies.router, prefix=f"{settings.API_V1_STR}/companies", tags=["Companies"])
 
 @app.get("/health", tags=["Health"])
 def health_check():

@@ -18,19 +18,19 @@ export const LandingPage: React.FC = () => {
 
   const faqs = [
     {
-      q: "How does HireAI calculate candidate match scores?",
-      a: "HireAI compares parsed technical competencies, historic work timelines, and credential parameters against specific job descriptions to compute a normalized suitability percentage score."
+      q: "How does ApplyRight calculate candidate match scores?",
+      a: "ApplyRight compares parsed technical competencies, historic work timelines, and credential parameters against specific job descriptions to compute a normalized suitability percentage score."
     },
     {
       q: "Is my resume data kept private and secure?",
       a: "Absolutely. All resume contents are stored inside your isolated database. Data is processed locally or over secure generative API endpoints using standard TLS encryption."
     },
     {
-      q: "Which AI models power HireAI's analysis?",
+      q: "Which AI models power ApplyRight's analysis?",
       a: "The platform integrates Google's generative AI API (specifically gemini-1.5-flash) for resume text structures, gap analyses, and tailored interview preps."
     },
     {
-      q: "Can I run HireAI inside Docker containers?",
+      q: "Can I run ApplyRight inside Docker containers?",
       a: "Yes. We package the entire stack—PostgreSQL, Redis, Celery, Backend, and Frontend—into a single docker-compose orchestrator configuration for local and cloud deploys."
     },
     {
@@ -88,7 +88,7 @@ export const LandingPage: React.FC = () => {
             <Cpu className="w-5 h-5" />
           </div>
           <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            HireAI
+            ApplyRight
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -374,7 +374,7 @@ export const LandingPage: React.FC = () => {
           </p>
           <div className="mt-8">
             <Button onClick={() => navigate('/register')} size="lg" className="font-bold shadow-lg">
-              Start with HireAI
+              Start with ApplyRight
             </Button>
           </div>
         </div>
@@ -420,7 +420,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-12 pt-6 border-t border-brand-border/40 text-center text-[10px] text-slate-500 font-semibold">
-          <p>© 2026 HireAI platform. Flagship Recruitment Engineering Project.</p>
+          <p>© 2026 ApplyRight platform. Flagship Recruitment Engineering Project.</p>
         </div>
       </footer>
     </div>

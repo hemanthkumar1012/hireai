@@ -19,7 +19,8 @@ import {
   Bell,
   Search,
   BookOpen,
-  Calendar
+  Calendar,
+  Bookmark
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -38,22 +39,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const seekerLinks = [
     { name: 'Overview', path: '/seeker/dashboard', icon: Layers },
+    { name: 'My Profile', path: '/seeker/profile', icon: UserIcon },
     { name: 'Find Jobs', path: '/seeker/jobs', icon: Briefcase },
+    { name: 'Saved Jobs', path: '/seeker/saved-jobs', icon: Bookmark },
     { name: 'Applications', path: '/seeker/applications', icon: FileText },
     { name: 'Resume AI', path: '/seeker/resume-intelligence', icon: Cpu },
     { name: 'Career Insights', path: '/seeker/career-insights', icon: Compass },
-    { name: 'Interview Prep', path: '/seeker/applications', icon: BookOpen },
-    { name: 'Profile', path: '/seeker/resume-intelligence', icon: UserIcon },
+    { name: 'Interview Prep', path: '/seeker/interview-prep', icon: BookOpen },
   ];
 
   const recruiterLinks = [
-    { name: 'Overview', path: '/recruiter/dashboard', icon: Layers },
-    { name: 'Jobs', path: '/recruiter/jobs', icon: Briefcase },
-    { name: 'Candidates', path: '/recruiter/candidates', icon: FileSearch },
-    { name: 'Applications', path: '/recruiter/candidates', icon: FileText },
-    { name: 'Interviews', path: '/recruiter/candidates', icon: Calendar },
+    { name: 'Dashboard', path: '/recruiter/dashboard', icon: Layers },
+    { name: 'Company Profile', path: '/recruiter/company', icon: Briefcase },
+    { name: 'Post a Job', path: '/recruiter/jobs/create', icon: FileText },
+    { name: 'Manage Jobs', path: '/recruiter/jobs', icon: FileSearch },
+    { name: 'Candidates', path: '/recruiter/candidates', icon: UserIcon },
     { name: 'Analytics', path: '/recruiter/analytics', icon: TrendingUp },
-    { name: 'Company Profile', path: '/recruiter/jobs', icon: UserIcon },
   ];
 
   const links = isRecruiter ? recruiterLinks : seekerLinks;
@@ -81,7 +82,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
           {!isCollapsed && (
             <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              HireAI
+              ApplyRight
             </span>
           )}
         </div>
@@ -154,7 +155,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <div className="p-1.5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl text-white">
                   <Cpu className="w-4 h-4" />
                 </div>
-                <span className="font-extrabold text-sm tracking-tight text-white">HireAI</span>
+                <span className="font-extrabold text-sm tracking-tight text-white">ApplyRight</span>
               </div>
               <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />

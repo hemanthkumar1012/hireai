@@ -66,12 +66,12 @@ export const SeekerDashboard: React.FC = () => {
 
   const seekerName = authState.user?.full_name || "Hemanth";
   
-  // Pipeline categorization mock
+  // Pipeline categorization
   const pipeline = {
-    applied: applications.filter(a => a.status === 'applied'),
-    screening: applications.filter(a => a.status === 'reviewing'),
-    interview: applications.filter(a => a.status === 'interviewed'),
-    offer: applications.filter(a => a.status === 'accepted')
+    applied: applications.filter(a => a.status === 'APPLIED'),
+    screening: applications.filter(a => a.status === 'SCREENING'),
+    interview: applications.filter(a => a.status === 'INTERVIEW'),
+    offer: applications.filter(a => a.status === 'OFFER' || a.status === 'HIRED')
   };
 
   // Symmetrical profile completion circular SVG calculation

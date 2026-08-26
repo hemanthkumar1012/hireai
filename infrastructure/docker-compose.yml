@@ -3,12 +3,12 @@ version: "3.8"
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: hireai-db
+    container_name: applyright-db
     restart: always
     environment:
-      POSTGRES_USER: hireai_user
-      POSTGRES_PASSWORD: hireai_password
-      POSTGRES_DB: hireai_prod
+      POSTGRES_USER: applyright_user
+      POSTGRES_PASSWORD: applyright_password
+      POSTGRES_DB: applyright_prod
     ports:
       - "5432:5432"
     volumes:
@@ -17,7 +17,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: hireai-cache
+    container_name: applyright-cache
     restart: always
     ports:
       - "6379:6379"
@@ -26,11 +26,11 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: hireai-backend
+    container_name: applyright-backend
     restart: always
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     environment:
-      - DATABASE_URL=postgresql://hireai_user:hireai_password@postgres:5432/hireai_prod
+      - DATABASE_URL=postgresql://applyright_user:applyright_password@postgres:5432/applyright_prod
       - REDIS_URL=redis://redis:6379/0
       - AI_PROVIDER=mock
       - SECRET_KEY=87f2e6b9a89d71c4c3b5d2e0f4a3e2d1c9b8a7f6e5d4c3b2a1
@@ -44,11 +44,11 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: hireai-worker
+    container_name: applyright-worker
     restart: always
     command: celery -A app.workers.celery_app.celery_app worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://hireai_user:hireai_password@postgres:5432/hireai_prod
+      - DATABASE_URL=postgresql://applyright_user:applyright_password@postgres:5432/applyright_prod
       - REDIS_URL=redis://redis:6379/0
       - AI_PROVIDER=mock
     depends_on:
@@ -60,7 +60,7 @@ services:
       context: ../frontend
       dockerfile: ../backend/Dockerfile # Reuse base, or run node container. Running natively is often preferred.
     image: node:18-alpine
-    container_name: hireai-frontend
+    container_name: applyright-frontend
     working_dir: /app
     volumes:
       - ../frontend:/app

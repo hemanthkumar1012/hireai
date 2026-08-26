@@ -76,7 +76,7 @@ export const Register: React.FC = () => {
   return (
     <AuthLayout>
       <h2 className="text-xl font-extrabold text-slate-100 tracking-tight text-center mb-6">
-        Create your HireAI account
+        Create your ApplyRight account
       </h2>
 
       {error && (

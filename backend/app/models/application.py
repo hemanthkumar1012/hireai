@@ -1,18 +1,24 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, func
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
+
 class Application(Base):
     __tablename__ = "applications"
+    __table_args__ = (
+        UniqueConstraint("job_id", "seeker_id", name="uq_application_job_seeker"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
-    seeker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    status = Column(String, default="applied", nullable=False)  # "applied", "reviewing", "interviewed", "accepted", "rejected"
+    job_id = Column(Integer, ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    seeker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    cover_letter = Column(Text, nullable=True)
+    status = Column(String, default="APPLIED", nullable=False, index=True)
+    # Statuses: APPLIED, SCREENING, SHORTLISTED, INTERVIEW, OFFER, HIRED, REJECTED, WITHDRAWN
     match_score = Column(Integer, default=0, nullable=False)
-    match_explanation = Column(JSON, default=dict, nullable=False)  # AI breakdown of fit
-    interview_questions = Column(JSON, default=list, nullable=False)  # Interview prep questions/answers
-    created_at = Column(DateTime, default=func.now(), nullable=False)
+    match_explanation = Column(JSON, default=dict, nullable=False)
+    interview_questions = Column(JSON, default=list, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False, index=True)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships

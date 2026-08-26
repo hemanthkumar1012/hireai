@@ -1,6 +1,6 @@
-# HireAI — Intelligent Recruitment & Career Platform
+# ApplyRight — Intelligent Recruitment & Career Platform
 
-HireAI is a flagship production-grade recruitment and career intelligence platform. It features distinct portals for Job Seekers (AI resume analysis, automated job matching, career gap analysis, and tailored interview prep) and Recruiters (applicant tracking, AI candidate ranking, analytics dashboards, and job posting).
+ApplyRight is a flagship production-grade recruitment and career intelligence platform. It features distinct portals for Job Seekers (AI resume analysis, automated job matching, career gap analysis, and tailored interview prep) and Recruiters (applicant tracking, AI candidate ranking, analytics dashboards, and job posting).
 
 ---
 
@@ -42,7 +42,7 @@ Create a `.env` file under `backend/` or configure them in your environment:
 
 | Variable | Description | Default |
 |---|---|---|
-| `DATABASE_URL` | SQLAlchemy connection string | `sqlite:///./hireai.db` |
+| `DATABASE_URL` | SQLAlchemy connection string | `sqlite:///./applyright.db` |
 | `JWT_SECRET_KEY` | JWT signature encryption key | `87f2e6b9a89d71c4c3b5d2e0f4a3e2d1c9b8...` |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Access Token lifetime | `30` |
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | Refresh Token lifetime | `7` |

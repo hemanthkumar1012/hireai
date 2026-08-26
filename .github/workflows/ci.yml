@@ -1,4 +1,4 @@
-name: HireAI Continuous Integration
+name: ApplyRight Continuous Integration
 
 on:
   push:

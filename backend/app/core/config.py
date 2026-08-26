@@ -5,10 +5,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "HireAI"
+    PROJECT_NAME: str = "ApplyRight"
     
     # Database
-    DATABASE_URL: str = "sqlite:///./hireai.db"
+    DATABASE_URL: str = "sqlite:///./applyright.db"
     
     # Security
     JWT_SECRET_KEY: str = "87f2e6b9a89d71c4c3b5d2e0f4a3e2d1c9b8a7f6e5d4c3b2a1"
