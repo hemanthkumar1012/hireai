@@ -15,10 +15,7 @@ import { JobDetailPage } from './pages/seeker/JobDetailPage';
 import { ApplicationsPage } from './pages/seeker/ApplicationsPage';
 import { ResumeIntelligence } from './pages/seeker/ResumeIntelligence';
 import { CareerInsights } from './pages/seeker/CareerInsights';
-<<<<<<< HEAD
 import { ProfilePage } from './pages/seeker/ProfilePage';
-=======
->>>>>>> 3c63cab110d4253a265397bfe318e47047dcb95a
 import { SavedJobsPage } from './pages/seeker/SavedJobsPage';
 
 // Recruiter Pages
@@ -167,7 +164,6 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/seeker/saved-jobs" element={<ProtectedRoute allowedRole="JOB_SEEKER"><SavedJobsPage /></ProtectedRoute>} />
 
             {/* Protected Recruiter Portal subpaths */}
             <Route

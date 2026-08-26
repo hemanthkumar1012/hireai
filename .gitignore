@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 __pycache__/
 *.py[cod]
 *$py.class
@@ -35,48 +34,3 @@ yarn-error.log
 # OS generated files
 .DS_Store
 Thumbs.db
-=======
-# Environment and secrets
-.env
-.env.*
-!.env.example
-*.secret
-*.key
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-.venv/
-venv/
-
-# Local databases and uploads
-*.db
-*.sqlite
-*.sqlite3
-uploads/
-
-# Node and frontend build output
-node_modules/
-dist/
-.vite/
-
-# Editors and operating systems
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea/
-.DS_Store
-Thumbs.db
-
-# Logs and temporary files
-*.log
-*.tmp
-*.swp
->>>>>>> 3c63cab110d4253a265397bfe318e47047dcb95a

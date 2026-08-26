@@ -1,8 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import List, Literal, Optional
-
-JobStatus = Literal["DRAFT", "PUBLISHED", "CLOSED", "ARCHIVED"]
+from typing import List, Optional
 
 
 class JobBase(BaseModel):
@@ -16,17 +14,12 @@ class JobBase(BaseModel):
     max_salary: Optional[int] = None
     currency: str = "USD"
     salary_range: Optional[str] = None
-<<<<<<< HEAD
     experience_min: Optional[int] = None
     experience_max: Optional[int] = None
     skills_needed: List[str] = []
     requirements: List[str] = []
     application_deadline: Optional[datetime] = None
 
-=======
-    skills_needed: List[str] = Field(default_factory=list)
-    requirements: List[str] = Field(default_factory=list)
->>>>>>> 3c63cab110d4253a265397bfe318e47047dcb95a
 
 class JobCreate(JobBase):
     status: str = "PUBLISHED"
@@ -50,12 +43,8 @@ class JobUpdate(BaseModel):
     requirements: Optional[List[str]] = None
     status: Optional[str] = None
     is_active: Optional[bool] = None
-<<<<<<< HEAD
     application_deadline: Optional[datetime] = None
 
-=======
-    status: Optional[JobStatus] = None
->>>>>>> 3c63cab110d4253a265397bfe318e47047dcb95a
 
 class JobOut(JobBase):
     id: int
@@ -63,7 +52,6 @@ class JobOut(JobBase):
     company_id: Optional[int] = None
     status: str
     is_active: bool
-    status: JobStatus
     created_at: datetime
     updated_at: datetime
 
