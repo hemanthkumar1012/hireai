@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, Job, JobSeekerProfile, Application, InterviewQuestion, PaginatedJobs, JobSearchParams, Company } from '../types';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api/v1' : 'http://localhost:8000/api/v1');
 
 export const apiClient = axios.create({
   baseURL: API_URL,
