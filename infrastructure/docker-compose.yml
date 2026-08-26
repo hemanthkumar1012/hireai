@@ -12,7 +12,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hireai_user -d hireai_prod"]
+      test: ["CMD-SHELL", "pg_isready -U applyright_user -d applyright_prod"]
       interval: 5s
       timeout: 5s
       retries: 10

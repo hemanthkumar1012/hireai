@@ -33,7 +33,7 @@ jobs:
       run: python -m pytest -q
     - name: Verify migrations
       env:
-        DATABASE_URL: sqlite:////tmp/hireai-ci.db
+        DATABASE_URL: sqlite:////tmp/applyright-ci.db
       working-directory: backend
       run: |
         python -m alembic upgrade head

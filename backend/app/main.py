@@ -46,7 +46,7 @@ app.include_router(companies.router, prefix=f"{settings.API_V1_STR}/companies", 
 @app.get("/", tags=["Health"])
 def root():
     return {
-        "service": "HireAI API",
+        "service": "ApplyRight API",
         "status": "running",
         "health": "/health",
         "docs": "/docs"

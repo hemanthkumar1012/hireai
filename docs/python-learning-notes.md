@@ -1,6 +1,6 @@
 # Python Learning Notes
 
-These notes describe the main Python concepts used in HireAI's backend.
+These notes describe the main Python concepts used in ApplyRight's backend.
 
 ## FastAPI routes
 
