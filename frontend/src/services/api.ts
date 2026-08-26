@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, Job, JobSeekerProfile, Application, InterviewQuestion, PaginatedJobs, JobSearchParams, Company } from '../types';
 
-const API_URL = 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -83,6 +83,16 @@ export const jobsApi = {
   async search(params?: JobSearchParams): Promise<PaginatedJobs> {
     const res = await apiClient.get('/jobs/', { params });
     return res.data;
+  },
+  async saved(): Promise<Job[]> {
+    const res = await apiClient.get('/jobs/saved');
+    return res.data;
+  },
+  async save(id: number): Promise<void> {
+    await apiClient.post(`/jobs/${id}/save`);
+  },
+  async unsave(id: number): Promise<void> {
+    await apiClient.delete(`/jobs/${id}/save`);
   },
   async get(id: number): Promise<Job> {
     const res = await apiClient.get(`/jobs/${id}`);

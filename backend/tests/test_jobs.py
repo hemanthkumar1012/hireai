@@ -77,6 +77,7 @@ def test_job_lifecycle(client):
     assert delete_res_recruiter.status_code == 204
 
 
+<<<<<<< HEAD
 def test_application_workflow(client):
     recruiter_token = _register_recruiter(client, "rec2@test.com")
     seeker_token = _register_seeker(client, "seek2@test.com")
@@ -161,3 +162,38 @@ def test_saved_jobs(client):
     # Verify removed
     saved2 = client.get("/api/v1/applications/saved-jobs", headers=seeker_headers)
     assert len(saved2.json()) == 0
+=======
+def test_job_status_transitions_and_application_block(client):
+    recruiter = client.post(
+        "/api/v1/auth/register",
+        json={"email": "lifecycle-recruiter@test.com", "password": "password123", "first_name": "Lifecycle", "last_name": "Recruiter", "role": "RECRUITER"},
+    ).json()
+    seeker = client.post(
+        "/api/v1/auth/register",
+        json={"email": "lifecycle-seeker@test.com", "password": "password123", "first_name": "Lifecycle", "last_name": "Seeker", "role": "JOB_SEEKER"},
+    ).json()
+    recruiter_headers = {"Authorization": f"Bearer {recruiter['access_token']}"}
+    seeker_headers = {"Authorization": f"Bearer {seeker['access_token']}"}
+
+    job = client.post(
+        "/api/v1/jobs/",
+        headers=recruiter_headers,
+        json={"title": "Lifecycle Engineer", "description": "Build systems", "company_name": "HireAI", "location": "Remote"},
+    ).json()
+    assert job["status"] == "PUBLISHED"
+
+    close_response = client.post(
+        f"/api/v1/jobs/{job['id']}/lifecycle?new_status=CLOSED",
+        headers=recruiter_headers,
+    )
+    assert close_response.status_code == 200
+    assert close_response.json()["status"] == "CLOSED"
+    assert client.post("/api/v1/applications/", headers=seeker_headers, json={"job_id": job["id"]}).status_code == 404
+
+    reopen_response = client.post(
+        f"/api/v1/jobs/{job['id']}/lifecycle?new_status=PUBLISHED",
+        headers=recruiter_headers,
+    )
+    assert reopen_response.status_code == 200
+    assert client.post("/api/v1/applications/", headers=seeker_headers, json={"job_id": job["id"]}).status_code == 201
+>>>>>>> 3c63cab110d4253a265397bfe318e47047dcb95a

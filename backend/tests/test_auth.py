@@ -70,6 +70,7 @@ def test_register_and_login(client):
     assert bad_login.status_code == 400
 
 
+<<<<<<< HEAD
 def test_protected_endpoint_unauthorized(client):
     """Accessing protected endpoint without token returns 401/403"""
     res = client.get("/api/v1/auth/me")
@@ -104,3 +105,17 @@ def test_role_authorization(client):
         headers=headers,
     )
     assert job_res.status_code == 403
+=======
+def test_public_registration_cannot_create_admin(client):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "admin-attempt@test.com",
+            "password": "password123",
+            "first_name": "Attempted",
+            "last_name": "Admin",
+            "role": "ADMIN",
+        },
+    )
+    assert response.status_code == 403
+>>>>>>> 3c63cab110d4253a265397bfe318e47047dcb95a

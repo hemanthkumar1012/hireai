@@ -69,7 +69,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   };
 
   return (
-    <div className="flex h-screen bg-[#070A0F] text-slate-100 overflow-hidden font-sans">
+    <div className="flex min-h-screen bg-[#070A0F] text-slate-100 overflow-hidden font-sans">
       {/* Sidebar for Desktop */}
       <aside 
         className={`hidden md:flex flex-col bg-brand-surface1 border-r border-brand-border shrink-0 transition-all duration-300 relative ${
@@ -115,6 +115,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         {/* Collapse Toggle Trigger */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="absolute bottom-24 -right-3 w-6 h-6 rounded-full border border-brand-border bg-brand-surface2 hover:bg-brand-surface1 hover:border-slate-700 text-slate-400 hover:text-white flex items-center justify-center shadow-lg transition duration-200"
         >
           {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -157,7 +159,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </div>
                 <span className="font-extrabold text-sm tracking-tight text-white">ApplyRight</span>
               </div>
-              <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setSidebarOpen(false)} aria-label="Close navigation" className="p-2 rounded-lg text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -213,7 +215,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-1 bg-brand-surface2 border border-brand-border rounded-lg text-slate-400 hover:text-white"
+              aria-label="Open navigation"
+              className="md:hidden min-h-10 min-w-10 p-2 bg-brand-surface2 border border-brand-border rounded-lg text-slate-400 hover:text-white"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -221,6 +224,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <div className="relative hidden sm:block w-48 lg:w-64">
               <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
               <input
+                aria-label="Search console"
                 type="text"
                 placeholder="Search console..."
                 className="w-full pl-9 pr-3 py-1.5 bg-brand-surface1 border border-brand-border rounded-xl text-[10px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -230,7 +234,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           
           <div className="flex items-center gap-4">
             {/* Notification bell */}
-            <button className="p-2 hover:bg-brand-surface1 border border-brand-border hover:border-slate-700 rounded-xl text-slate-400 hover:text-white transition relative">
+            <button aria-label="Open notifications" title="Notifications" className="min-h-10 min-w-10 p-2 hover:bg-brand-surface1 border border-brand-border hover:border-slate-700 rounded-xl text-slate-400 hover:text-white transition relative">
               <Bell className="w-3.5 h-3.5" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full" />
             </button>
@@ -241,7 +245,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         </header>
 
         {/* Scrollable Inner Page Container */}
-        <main className="flex-1 overflow-y-auto bg-brand-bg p-6">
+        <main className="flex-1 overflow-y-auto bg-brand-bg p-4 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
             {children}
           </div>

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 import jwt
 from app.core.database import get_db
@@ -12,7 +12,17 @@ from app.api import deps
 router = APIRouter()
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-def register(user_in: UserCreate, db: Session = Depends(get_db)):
+def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db)):
+    try:
+        security.enforce_rate_limit(request.client.host if request.client else "unknown", "register")
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(error))
+    if user_in.role == "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator accounts must be provisioned by an administrator",
+        )
+
     # Check if user already exists
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
@@ -51,7 +61,11 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     }
 
 @router.post("/login", response_model=Token)
-def login(user_in: UserLogin, db: Session = Depends(get_db)):
+def login(request: Request, user_in: UserLogin, db: Session = Depends(get_db)):
+    try:
+        security.enforce_rate_limit(request.client.host if request.client else "unknown", "login")
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(error))
     user = db.query(User).filter(User.email == user_in.email).first()
     if not user or not security.verify_password(user_in.password, user.password_hash):
         raise HTTPException(
@@ -96,7 +110,13 @@ def refresh_token(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
             detail="Could not validate refresh credentials"
         )
         
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    try:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate refresh credentials",
+        )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

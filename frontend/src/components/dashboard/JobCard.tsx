@@ -3,7 +3,7 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { Job } from '../../types';
-import { Briefcase, MapPin, DollarSign } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Bookmark } from 'lucide-react';
 
 interface JobCardProps {
   job: Job;
@@ -11,6 +11,8 @@ interface JobCardProps {
   isApplying?: boolean;
   hasApplied?: boolean;
   hideAction?: boolean;
+  isSaved?: boolean;
+  onToggleSave?: (jobId: number) => void;
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -18,7 +20,9 @@ export const JobCard: React.FC<JobCardProps> = ({
   onApply,
   isApplying = false,
   hasApplied = false,
-  hideAction = false
+  hideAction = false,
+  isSaved = false,
+  onToggleSave
 }) => {
   return (
     <Card hoverEffect className="flex flex-col justify-between h-full">
@@ -30,9 +34,14 @@ export const JobCard: React.FC<JobCardProps> = ({
             </h4>
             <p className="text-xs text-indigo-400 font-medium mt-0.5">{job.company_name}</p>
           </div>
-          {hasApplied && (
-            <Badge variant="success">Applied</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {hasApplied && <Badge variant="success">Applied</Badge>}
+            {onToggleSave && (
+              <button type="button" aria-label={isSaved ? 'Remove saved job' : 'Save job'} title={isSaved ? 'Remove saved job' : 'Save job'} onClick={() => onToggleSave(job.id)} className="p-1.5 rounded-lg border border-brand-border text-slate-400 hover:text-indigo-300 hover:border-indigo-400/40">
+                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-indigo-400 text-indigo-400' : ''}`} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-y-1 gap-x-3 text-xs text-slate-400 mt-3 font-medium">

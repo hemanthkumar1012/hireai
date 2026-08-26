@@ -60,7 +60,7 @@ export const AnalyticsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Side: Match Score Distribution Bar Chart */}
         <div className="lg:col-span-7">
-          <Card className="p-5 space-y-4 bg-brand-surface1/60">
+          <Card className="min-w-0 overflow-hidden p-5 space-y-4 bg-brand-surface1/60">
             <div className="flex items-center justify-between border-b border-brand-border/60 pb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-indigo-400" />
@@ -70,11 +70,11 @@ export const AnalyticsPage: React.FC = () => {
             </div>
             
             <div className="h-64 text-[10px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={distributionData} margin={{ top: 20, right: 10, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1E2638" vertical={false} />
-                  <XAxis dataKey="range" stroke="#64748b" />
-                  <YAxis stroke="#64748b" allowDecimals={false} />
+                  <XAxis dataKey="range" stroke="#64748b" interval="preserveStartEnd" />
+                  <YAxis stroke="#64748b" allowDecimals={false} width={28} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0E1321', border: '1px solid #1E2638', borderRadius: '12px' }}
                     labelStyle={{ color: '#fff', fontWeight: 'bold' }}
@@ -96,7 +96,7 @@ export const AnalyticsPage: React.FC = () => {
 
         {/* Right Side: Status Distribution Pie Chart */}
         <div className="lg:col-span-5">
-          <Card className="p-5 space-y-4 bg-brand-surface1/60">
+          <Card className="min-w-0 overflow-hidden p-5 space-y-4 bg-brand-surface1/60">
             <div className="flex items-center justify-between border-b border-brand-border/60 pb-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -108,7 +108,7 @@ export const AnalyticsPage: React.FC = () => {
             <div className="h-64 flex flex-col justify-center items-center relative text-[10px]">
               {statusData.length > 0 ? (
                 <>
-                  <ResponsiveContainer width="100%" height="80%">
+                  <ResponsiveContainer width="100%" height="80%" minWidth={0}>
                     <PieChart>
                       <Pie
                         data={statusData}
