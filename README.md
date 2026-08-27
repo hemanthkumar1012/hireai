@@ -43,10 +43,11 @@ Create a `.env` file under `backend/` or configure them in your environment:
 | Variable | Description | Default |
 |---|---|---|
 | `DATABASE_URL` | SQLAlchemy connection string | `sqlite:///./applyright.db` |
-| `JWT_SECRET_KEY` | JWT signature encryption key | `87f2e6b9a89d71c4c3b5d2e0f4a3e2d1c9b8...` |
+| `JWT_SECRET_KEY` | JWT signature encryption key | *(must be unique in production)* |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Access Token lifetime | `30` |
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | Refresh Token lifetime | `7` |
-| `REDIS_URL` | Redis broker URL (for Celery) | `redis://localhost:6379/0` |
+| `ENVIRONMENT` | Runtime environment (`development` or `production`) | `development` |
+| `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:5173` |
 | `AI_PROVIDER` | Swappable AI Engine (`mock` or `gemini`) | `mock` |
 | `AI_API_KEY` | Google Generative AI API Key | *(Optional)* |
 
