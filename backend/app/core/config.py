@@ -24,6 +24,23 @@ class Settings(BaseSettings):
     AI_API_KEY: Optional[str] = None
     ENVIRONMENT: str = "development"
 
+    @model_validator(mode="before")
+    @classmethod
+    def assemble_db_connection(cls, data: dict) -> dict:
+        import os
+        # Try to get POSTGRES_URL or DATABASE_URL from data or os.environ
+        postgres_url = data.get("POSTGRES_URL") or os.environ.get("POSTGRES_URL")
+        db_url = data.get("DATABASE_URL") or os.environ.get("DATABASE_URL")
+        
+        final_url = postgres_url or db_url
+        if final_url and final_url.startswith("postgres://"):
+            final_url = final_url.replace("postgres://", "postgresql://", 1)
+            
+        if final_url:
+            data["DATABASE_URL"] = final_url
+            
+        return data
+
     @property
     def cors_origins(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
