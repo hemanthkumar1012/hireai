@@ -30,7 +30,9 @@ def search_jobs(
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Job).filter(Job.status == "PUBLISHED", Job.is_active == True)
+    from sqlalchemy import func
+    # Use case-insensitive status and remove strict is_active requirement (legacy compat)
+    query = db.query(Job).filter(func.upper(Job.status) == "PUBLISHED")
 
     if search:
         query = query.filter(

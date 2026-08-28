@@ -28,15 +28,18 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_db_connection(cls, data: dict) -> dict:
         import os
-        # Try to get POSTGRES_URL or DATABASE_URL from data or os.environ
+        # Try multiple common env vars for the database URL
         postgres_url = data.get("POSTGRES_URL") or os.environ.get("POSTGRES_URL")
         db_url = data.get("DATABASE_URL") or os.environ.get("DATABASE_URL")
         
-        final_url = postgres_url or db_url
+        # Some Supabase setups might use SUPABASE_DB_URL
+        supabase_url = data.get("SUPABASE_DB_URL") or os.environ.get("SUPABASE_DB_URL")
+        
+        final_url = postgres_url or db_url or supabase_url
         if final_url and final_url.startswith("postgres://"):
             final_url = final_url.replace("postgres://", "postgresql://", 1)
             
-        if final_url:
+        if final_url and (final_url.startswith("postgresql://") or final_url.startswith("sqlite")):
             data["DATABASE_URL"] = final_url
             
         return data
