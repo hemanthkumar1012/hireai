@@ -143,16 +143,16 @@ export const JobsPage: React.FC = () => {
       {/* Results */}
       {loading ? (
         <LoadingSpinner />
-      ) : data?.jobs.length === 0 ? (
+      ) : !data || !data.jobs || data.jobs.length === 0 ? (
         <EmptyState title="No jobs found" description="Try adjusting your search or filters to find more opportunities." icon={Briefcase} />
       ) : (
         <div className="space-y-4">
           <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            Showing {data?.jobs.length} of {data?.total} result{data?.total !== 1 && 's'}
+            Showing {data.jobs.length} of {data.total} result{data.total !== 1 && 's'}
           </div>
           
           <div className="grid grid-cols-1 gap-4">
-            {data?.jobs.map(job => (
+            {data.jobs.map(job => (
               <Card 
                 key={job.id} 
                 hoverEffect 
