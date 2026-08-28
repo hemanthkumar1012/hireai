@@ -67,6 +67,14 @@ export const JobsPage: React.FC = () => {
 
   const handleSave = async (jobId: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // For external jobs, saving is not fully supported but we can alert based on some logic if needed
+    // In a real app we'd save it to a separate table or handle negative IDs
+    if (jobId < 0) {
+      alert("Saving external jobs is not supported yet.");
+      return;
+    }
+    
     try {
       await jobsApi.save(jobId);
     } catch (err) {
@@ -152,50 +160,69 @@ export const JobsPage: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 gap-4">
-            {data.jobs.map(job => (
-              <Card 
-                key={job.id} 
-                hoverEffect 
-                className="p-5 bg-brand-surface1/60 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer"
-                onClick={() => navigate(`/jobs/${job.id}`)}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-200 group-hover:text-indigo-400 transition">{job.title}</h3>
-                      <p className="text-xs text-indigo-400/80 font-semibold">{job.company_name}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 font-medium">
-                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
-                    <Badge variant="info">{job.work_mode}</Badge>
-                    <Badge variant="primary">{job.employment_type.replace('_', ' ')}</Badge>
-                    {job.salary_range && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-semibold">{job.salary_range}</span>}
-                  </div>
-                  
-                  {job.skills_needed && job.skills_needed.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {job.skills_needed.slice(0, 5).map((skill, i) => (
-                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded border border-brand-border text-slate-300 bg-brand-surface2">
-                          {skill}
-                        </span>
-                      ))}
-                      {job.skills_needed.length > 5 && <span className="text-[9px] text-slate-500 px-1">+{job.skills_needed.length - 5}</span>}
+              {data.jobs.map(job => {
+                const isExternal = job.source && job.source !== 'applyright';
+                
+                return (
+                <Card 
+                  key={job.id} 
+                  hoverEffect 
+                  className="p-5 bg-brand-surface1/60 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer relative"
+                  onClick={() => {
+                    if (isExternal && job.apply_url) {
+                      window.open(job.apply_url, '_blank', 'noopener,noreferrer');
+                    } else {
+                      navigate(`/jobs/${job.id}`);
+                    }
+                  }}
+                >
+                  {isExternal && (
+                    <div className="absolute top-0 right-0 bg-indigo-500/20 text-indigo-300 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-xl border-b border-l border-indigo-500/30 capitalize">
+                      {job.source}
                     </div>
                   )}
-                </div>
-
-                <div className="flex flex-row md:flex-col items-center justify-end gap-2 shrink-0">
-                  <Button variant="outline" onClick={(e) => handleSave(job.id, e)} className="p-2 h-auto text-slate-400 hover:text-white group">
-                    <Bookmark className="w-4 h-4 group-hover:fill-current" />
-                  </Button>
-                  <Button className="text-xs py-1.5 px-4 font-bold flex items-center gap-1">
-                    Apply <ArrowRight className="w-3 h-3" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                  <div className="space-y-2 w-full md:w-auto flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-200 group-hover:text-indigo-400 transition">{job.title}</h3>
+                        <p className="text-xs text-indigo-400/80 font-semibold">{job.company_name}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 font-medium">
+                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
+                      <Badge variant="info">{job.work_mode}</Badge>
+                      <Badge variant="primary">{job.employment_type.replace('_', ' ')}</Badge>
+                      {job.salary_range && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-semibold">{job.salary_range}</span>}
+                    </div>
+                    
+                    {job.skills_needed && job.skills_needed.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {job.skills_needed.slice(0, 5).map((skill, i) => (
+                          <span key={i} className="text-[9px] px-1.5 py-0.5 rounded border border-brand-border text-slate-300 bg-brand-surface2">
+                            {skill}
+                          </span>
+                        ))}
+                        {job.skills_needed.length > 5 && <span className="text-[9px] text-slate-500 px-1">+{job.skills_needed.length - 5}</span>}
+                      </div>
+                    )}
+                  </div>
+  
+                  <div className="flex flex-row md:flex-col items-center justify-end gap-2 shrink-0">
+                    <Button variant="outline" onClick={(e) => handleSave(job.id, e)} className="p-2 h-auto text-slate-400 hover:text-white group" title="Save Job">
+                      <Bookmark className="w-4 h-4 group-hover:fill-current" />
+                    </Button>
+                    <Button className="text-xs py-1.5 px-4 font-bold flex items-center gap-1" onClick={(e) => {
+                      if (isExternal && job.apply_url) {
+                        e.stopPropagation();
+                        window.open(job.apply_url, '_blank', 'noopener,noreferrer');
+                      }
+                    }}>
+                      {isExternal ? 'Apply External' : 'Apply'} <ArrowRight className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </Card>
+              )})}
           </div>
 
           {/* Pagination */}

@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=PaginatedJobs)
-def search_jobs(
+async def search_jobs(
     search: Optional[str] = None,
     location: Optional[str] = None,
     work_mode: Optional[str] = None,
@@ -31,6 +31,8 @@ def search_jobs(
     db: Session = Depends(get_db)
 ):
     from sqlalchemy import func
+    from app.services.external_jobs import fetch_external_jobs
+    
     # Use case-insensitive status and remove strict is_active requirement (legacy compat)
     query = db.query(Job).filter(func.upper(Job.status) == "PUBLISHED")
 
@@ -64,9 +66,6 @@ def search_jobs(
             if skill:
                 query = query.filter(Job.skills_needed.contains(skill))
 
-    # Total count before pagination
-    total = query.count()
-
     # Sorting
     if sort == "oldest":
         query = query.order_by(Job.created_at.asc())
@@ -77,17 +76,41 @@ def search_jobs(
     else:  # newest
         query = query.order_by(Job.created_at.desc())
 
-    # Pagination
-    offset = (page - 1) * page_size
-    jobs = query.offset(offset).limit(page_size).all()
+    # Total count before pagination (internal only)
+    internal_total = query.count()
 
-    return PaginatedJobs(
-        jobs=jobs,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=math.ceil(total / page_size) if total > 0 else 0
-    )
+    offset = (page - 1) * page_size
+    internal_jobs = query.offset(offset).limit(page_size).all()
+    
+    # Map internal jobs to JobOut
+    from app.schemas.job import JobOut
+    internal_job_outs = [JobOut.model_validate(job) for job in internal_jobs]
+    
+    # External Jobs
+    remaining_slots = page_size - len(internal_job_outs)
+    external_jobs = []
+    
+    if remaining_slots > 0:
+        external_results = await fetch_external_jobs(
+            search=search, 
+            location=location, 
+            limit=remaining_slots
+        )
+        external_jobs = external_results
+        
+    combined_jobs = internal_job_outs + external_jobs
+    
+    total_found = internal_total + len(external_jobs)
+    import math
+    total_pages = math.ceil(total_found / page_size) if total_found > 0 else 0
+
+    return {
+        "jobs": combined_jobs,
+        "total": total_found,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }
 
 
 @router.get("/recruiter", response_model=List[JobOut])

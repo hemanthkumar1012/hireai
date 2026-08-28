@@ -12,7 +12,7 @@ export interface User {
 
 export interface Job {
   id: number;
-  recruiter_id: number;
+  recruiter_id?: number;
   company_id?: number;
   title: string;
   slug?: string;
@@ -34,6 +34,8 @@ export interface Job {
   application_deadline?: string;
   created_at: string;
   updated_at: string;
+  source?: string;
+  apply_url?: string;
 }
 
 export interface PaginatedJobs {

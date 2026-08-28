@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     AI_API_KEY: Optional[str] = None
     ENVIRONMENT: str = "development"
 
+    # External Jobs
+    EXTERNAL_JOBS_PROVIDER: Optional[str] = None
+    EXTERNAL_JOBS_API_KEY: Optional[str] = None
+
     @model_validator(mode="before")
     @classmethod
     def assemble_db_connection(cls, data: dict) -> dict:

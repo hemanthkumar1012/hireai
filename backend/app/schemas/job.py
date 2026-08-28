@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 class JobBase(BaseModel):
@@ -45,15 +45,16 @@ class JobUpdate(BaseModel):
     is_active: Optional[bool] = None
     application_deadline: Optional[datetime] = None
 
-
 class JobOut(JobBase):
     id: int
-    recruiter_id: int
+    recruiter_id: Optional[int] = None
     company_id: Optional[int] = None
     status: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    source: str = "applyright"
+    apply_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
