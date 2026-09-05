@@ -41,6 +41,7 @@ class ProfileOut(BaseModel):
     linkedin_url: Optional[str] = None
     github_url: Optional[str] = None
     resume_text: Optional[str] = None
+    resume_analysis: Optional[Dict[str, Any]] = None
     skills: List[str] = []
     work_history: List[Dict[str, Any]] = []
     education: List[Dict[str, Any]] = []
@@ -69,3 +70,4 @@ class RecruiterProfileOut(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
