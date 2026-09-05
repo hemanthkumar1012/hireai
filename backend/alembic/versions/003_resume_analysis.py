@@ -9,11 +9,25 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "job_seeker_profiles",
-        sa.Column("resume_analysis", sa.JSON(), nullable=True),
-    )
+    connection = op.get_bind()
+    inspector = sa.inspect(connection)
+
+    if "resume_analysis" not in {
+        column["name"]
+        for column in inspector.get_columns("job_seeker_profiles")
+    }:
+        op.add_column(
+            "job_seeker_profiles",
+            sa.Column("resume_analysis", sa.JSON(), nullable=True),
+        )
 
 
 def downgrade() -> None:
-    op.drop_column("job_seeker_profiles", "resume_analysis")
+    connection = op.get_bind()
+    inspector = sa.inspect(connection)
+
+    if "resume_analysis" in {
+        column["name"]
+        for column in inspector.get_columns("job_seeker_profiles")
+    }:
+        op.drop_column("job_seeker_profiles", "resume_analysis")
