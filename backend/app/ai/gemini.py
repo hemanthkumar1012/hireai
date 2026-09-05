@@ -1,176 +1,238 @@
-import json
-import logging
+import re
 from typing import Any, Dict, List, Optional
 
-from google import genai
-from google.genai import types
-
-from app.ai.mock import MockAIService
 from app.ai.service import AIService
 
 
-logger = logging.getLogger(__name__)
-
-
-class GeminiAIService(AIService):
-
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.client = genai.Client(api_key=self.api_key)
-        self.model_name = "gemini-2.5-flash"
-        self.mock_fallback = MockAIService()
-
-    def _generate_json(self, prompt: str, fallback_data: Any) -> Any:
-        try:
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                ),
-            )
-
-            return json.loads(response.text)
-
-        except Exception as e:
-            logger.error(
-                f"Gemini API error: {e}. Falling back to mock service."
-            )
-            return fallback_data
+class MockAIService(AIService):
 
     def parse_resume(self, resume_text: str) -> Dict[str, Any]:
-        prompt = f"""
-You are an expert resume parser.
+        text = resume_text.lower()
 
-Extract information from the resume below.
+        skills = [
+            "python",
+            "fastapi",
+            "django",
+            "flask",
+            "react",
+            "typescript",
+            "javascript",
+            "html",
+            "css",
+            "tailwind",
+            "next.js",
+            "node.js",
+            "express",
+            "sql",
+            "postgresql",
+            "mysql",
+            "mongodb",
+            "redis",
+            "docker",
+            "kubernetes",
+            "aws",
+            "gcp",
+            "azure",
+            "git",
+            "ci/cd",
+            "celery",
+            "graphql",
+            "rest api",
+            "pytorch",
+            "tensorflow",
+            "agile",
+        ]
 
-Return ONLY valid JSON using this structure:
+        extracted_skills = []
 
-{{
-    "skills": ["Skill 1", "Skill 2"],
-    "work_history": [
-        {{
-            "company": "Company Name",
-            "role": "Role Title",
-            "duration": "Duration",
-            "description": "Description"
-        }}
-    ],
-    "education": [
-        {{
-            "school": "School Name",
-            "degree": "Degree",
-            "field_of_study": "Field",
-            "year": "Year"
-        }}
-    ],
-    "career_goals": "Short summary of career goals"
-}}
+        for skill in skills:
+            pattern = r"(?<![a-z0-9])" + re.escape(skill) + r"(?![a-z0-9])"
 
-Rules:
-- Only extract information that is present in the resume.
-- Do not invent companies, skills, education, dates, or achievements.
-- If information is missing, use an empty value.
-- Keep the extracted information concise.
+            if re.search(pattern, text):
+                extracted_skills.append(
+                    skill.upper() if len(skill) <= 3 else skill.title()
+                )
 
-Resume:
-{resume_text}
-"""
+        work_history = []
 
-        fallback = self.mock_fallback.parse_resume(resume_text)
-        return self._generate_json(prompt, fallback)
+        if "react" in text or "typescript" in text:
+            work_history.append(
+                {
+                    "company": "Not specified",
+                    "role": "Frontend Developer",
+                    "duration": "Not specified",
+                    "description": "Experience with React and TypeScript.",
+                }
+            )
+
+        if "python" in text or "fastapi" in text or "django" in text:
+            work_history.append(
+                {
+                    "company": "Not specified",
+                    "role": "Backend Developer",
+                    "duration": "Not specified",
+                    "description": "Experience with Python-based backend development.",
+                }
+            )
+
+        education = []
+
+        career_goals = ""
+
+        return {
+            "skills": extracted_skills,
+            "work_history": work_history,
+            "education": education,
+            "career_goals": career_goals,
+        }
 
     def analyze_resume(
         self,
         resume_text: str,
         job_description: Optional[str] = None,
     ) -> Dict[str, Any]:
-        job_context = ""
+
+        text = resume_text.lower()
+
+        strengths = []
+        issues = []
+        recommendations = []
+        missing_keywords = []
+        weak_bullets = []
+
+        if re.search(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b", resume_text):
+            strengths.append("The resume includes an email address.")
+        else:
+            issues.append("No email address was detected.")
+
+        if re.search(r"\b(?:20\d{2})\b", resume_text):
+            strengths.append("The resume contains date information.")
+        else:
+            issues.append("Work or education dates were not clearly detected.")
+
+        if any(word in text for word in [
+            "experience",
+            "work experience",
+            "professional experience",
+        ]):
+            strengths.append("A work experience section is present.")
+        else:
+            issues.append("A clear work experience section is missing.")
+            recommendations.append(
+                "Add a clearly labeled Work Experience section."
+            )
+
+        if "skills" in text or "technical skills" in text:
+            strengths.append("A skills section is present.")
+        else:
+            issues.append("A dedicated skills section was not detected.")
+            recommendations.append(
+                "Add a Technical Skills section with the technologies you actually use."
+            )
+
+        if "education" in text:
+            strengths.append("An education section is present.")
+        else:
+            issues.append("An education section was not detected.")
+            recommendations.append(
+                "Add your degree, institution, field of study, and graduation year."
+            )
 
         if job_description:
-            job_context = f"""
-Job Description:
+            resume_words = set(re.findall(r"[a-zA-Z0-9+#./-]+", text))
+            job_words = set(
+                re.findall(
+                    r"[a-zA-Z0-9+#./-]+",
+                    job_description.lower(),
+                )
+            )
 
-{job_description}
-"""
+            important_words = {
+                word
+                for word in job_words
+                if len(word) >= 3
+            }
 
-        prompt = f"""
-You are an experienced technical recruiter and resume reviewer.
+            missing_keywords = sorted(
+                word
+                for word in important_words
+                if word not in resume_words
+            )[:20]
 
-Analyze the candidate's resume and provide practical feedback.
+        weak_phrases = [
+            "responsible for",
+            "worked on",
+            "helped with",
+            "duties included",
+            "worked with",
+        ]
 
-The ATS score is calculated separately by the application.
-DO NOT calculate or invent an ATS score.
+        for phrase in weak_phrases:
+            if phrase in text:
+                weak_bullets.append(
+                    {
+                        "original": phrase,
+                        "problem": "The wording is generic and does not clearly show ownership or results.",
+                        "suggestion": "Start the bullet with a strong action verb and describe the actual result.",
+                    }
+                )
 
-Return ONLY valid JSON using exactly this structure:
+        if not any(
+            word in text
+            for word in [
+                "%",
+                "users",
+                "customers",
+                "reduced",
+                "increased",
+                "improved",
+                "optimized",
+            ]
+        ):
+            issues.append(
+                "Few measurable achievements were detected."
+            )
 
-{{
-    "summary": "Short overall assessment of the resume.",
-    "strengths": [
-        "Specific strength found in the resume."
-    ],
-    "issues": [
-        "Specific problem found in the resume."
-    ],
-    "recommendations": [
-        "Specific improvement the candidate should make."
-    ],
-    "missing_keywords": [
-        "Relevant keyword that is missing."
-    ],
-    "weak_bullets": [
-        {{
-            "original": "Existing resume bullet.",
-            "problem": "Why the bullet is weak.",
-            "suggestion": "How to improve the bullet without inventing information."
-        }}
-    ]
-}}
+            recommendations.append(
+                "Add real metrics to strong achievements when you can verify them."
+            )
 
-Rules:
+        if len(extracted_skills := self.parse_resume(resume_text)["skills"]) == 0:
+            issues.append(
+                "No common technical skills were detected."
+            )
 
-1. Only use information actually present in the resume.
-2. Never invent achievements, companies, technologies, certifications,
-   responsibilities, numbers, or experience.
-3. Do not create fake metrics.
-4. If a bullet has no measurable result, suggest adding a real metric only
-   if the candidate can verify it.
-5. Identify vague or weak wording.
-6. Identify missing technical or role-specific keywords when a job
-   description is provided.
-7. Do not recommend adding a skill unless it is relevant to the target role.
-8. Keep recommendations practical and specific.
-9. Focus on improvements that can realistically increase recruiter and
-   ATS readability.
-10. Return empty arrays when there is nothing relevant to report.
-11. Do not rewrite the entire resume.
-12. Do not give an ATS score.
+            recommendations.append(
+                "Add the technical skills that are genuinely relevant to your target roles."
+            )
 
-Resume:
+        if job_description and missing_keywords:
+            recommendations.append(
+                "Review the job description and naturally include relevant missing keywords when they accurately describe your experience."
+            )
 
-{resume_text}
-
-{job_context}
-"""
-
-        fallback = self.mock_fallback.analyze_resume(
-            resume_text,
-            job_description,
+        recommendations.extend(
+            [
+                "Use clear section headings and concise bullet points.",
+                "Focus experience bullets on what you built, changed, improved, or delivered.",
+                "Do not add technologies, achievements, or metrics that you cannot support.",
+            ]
         )
 
-        result = self._generate_json(prompt, fallback)
+        summary = (
+            "The resume has been analyzed using the application's fallback "
+            "resume review rules. Improve the issues identified above before "
+            "applying."
+        )
 
-        if not isinstance(result, dict):
-            return fallback
-
-        result.setdefault("summary", "")
-        result.setdefault("strengths", [])
-        result.setdefault("issues", [])
-        result.setdefault("recommendations", [])
-        result.setdefault("missing_keywords", [])
-        result.setdefault("weak_bullets", [])
-
-        return result
+        return {
+            "summary": summary,
+            "strengths": strengths[:8],
+            "issues": issues[:10],
+            "recommendations": recommendations[:10],
+            "missing_keywords": missing_keywords[:20],
+            "weak_bullets": weak_bullets[:8],
+        }
 
     def match_job(
         self,
@@ -180,49 +242,87 @@ Resume:
         job_skills: List[str],
     ) -> Dict[str, Any]:
 
-        prompt = f"""
-You are an expert recruiter matching a candidate's resume to a job.
+        parsed = self.parse_resume(resume_text)
 
-Evaluate how well the candidate matches the position.
+        candidate_skills = [
+            skill.lower()
+            for skill in parsed["skills"]
+        ]
 
-Return ONLY valid JSON using this structure:
+        matched_skills = []
+        missing_skills = []
 
-{{
-    "match_score": 75,
-    "match_explanation": {{
-        "summary": "Overall fit summary.",
-        "matched_skills": ["Skill A", "Skill B"],
-        "missing_skills": ["Skill C"],
-        "strengths": ["Strength 1"],
-        "weaknesses": ["Weakness 1"]
-    }}
-}}
+        for skill in job_skills:
+            skill_lower = skill.lower()
 
-The match_score must be an integer from 0 to 100.
+            if any(
+                skill_lower == candidate
+                or skill_lower in candidate
+                or candidate in skill_lower
+                for candidate in candidate_skills
+            ):
+                matched_skills.append(skill)
+            else:
+                missing_skills.append(skill)
 
-Do not invent candidate experience or skills.
+        if job_skills:
+            skills_score = int(
+                len(matched_skills) / len(job_skills) * 80
+            )
+        else:
+            skills_score = 50
 
-Candidate Resume:
-{resume_text}
+        description = job_description.lower()
 
-Job Title:
-{job_title}
-
-Job Description:
-{job_description}
-
-Required Job Skills:
-{job_skills}
-"""
-
-        fallback = self.mock_fallback.match_job(
-            resume_text,
-            job_title,
-            job_description,
-            job_skills,
+        context_matches = sum(
+            1
+            for skill in candidate_skills
+            if skill in description
         )
 
-        return self._generate_json(prompt, fallback)
+        context_score = min(20, context_matches * 4)
+
+        match_score = min(
+            100,
+            max(30, skills_score + context_score),
+        )
+
+        strengths = []
+
+        if matched_skills:
+            strengths.append(
+                f"Relevant skills include {', '.join(matched_skills[:3])}."
+            )
+        else:
+            strengths.append(
+                "The candidate has a general technical background."
+            )
+
+        weaknesses = []
+
+        if missing_skills:
+            weaknesses.append(
+                f"Missing skills include {', '.join(missing_skills[:3])}."
+            )
+        else:
+            weaknesses.append(
+                "No major skill gaps were identified."
+            )
+
+        return {
+            "match_score": match_score,
+            "match_explanation": {
+                "summary": (
+                    f"The candidate has approximately "
+                    f"{match_score}% alignment with the "
+                    f"{job_title} position."
+                ),
+                "matched_skills": matched_skills,
+                "missing_skills": missing_skills,
+                "strengths": strengths,
+                "weaknesses": weaknesses,
+            },
+        }
 
     def analyze_career_gaps(
         self,
@@ -231,36 +331,44 @@ Required Job Skills:
         target_skills: List[str],
     ) -> Dict[str, Any]:
 
-        prompt = f"""
-Analyze the career gap for a candidate targeting the role:
+        current = {
+            skill.lower()
+            for skill in current_skills
+        }
 
-{target_role}
+        gaps = [
+            skill
+            for skill in target_skills
+            if skill.lower() not in current
+        ]
 
-Current skills:
-{current_skills}
+        recommendations = []
 
-Target skills:
-{target_skills}
+        if gaps:
+            recommendations.append(
+                f"Build a practical project using {gaps[0]}."
+            )
 
-Return ONLY valid JSON using this structure:
+            if len(gaps) > 1:
+                recommendations.append(
+                    f"Strengthen your knowledge of {gaps[1]} through a project or structured learning."
+                )
 
-{{
-    "gaps": ["Gap 1", "Gap 2"],
-    "recommendations": ["Recommendation 1"],
-    "suggested_actions": ["Action 1"]
-}}
+        else:
+            recommendations.append(
+                f"Continue building production-level experience relevant to {target_role}."
+            )
 
-Do not invent skills that the candidate has.
+        suggested_actions = [
+            "Build and document a practical project using the target stack.",
+            "Contribute to relevant open-source projects.",
+        ]
 
-"""
-
-        fallback = self.mock_fallback.analyze_career_gaps(
-            current_skills,
-            target_role,
-            target_skills,
-        )
-
-        return self._generate_json(prompt, fallback)
+        return {
+            "gaps": gaps,
+            "recommendations": recommendations,
+            "suggested_actions": suggested_actions,
+        }
 
     def generate_interview_questions(
         self,
@@ -269,45 +377,61 @@ Do not invent skills that the candidate has.
         job_description: str,
     ) -> List[Dict[str, Any]]:
 
-        prompt = f"""
-Generate 3 interview questions tailored to this candidate's resume
-and the target job.
+        parsed = self.parse_resume(resume_text)
+        skills = parsed["skills"]
 
-Return ONLY valid JSON as an array:
-
-[
-    {{
-        "question": "Question text",
-        "type": "technical",
-        "expected_answer_points": [
-            "Point 1",
-            "Point 2"
-        ],
-        "preparation_tip": "Preparation tip"
-    }}
-]
-
-The type must be one of:
-- technical
-- behavioral
-- background
-
-Do not invent information about the candidate.
-
-Candidate Resume:
-{resume_text}
-
-Job Title:
-{job_title}
-
-Job Description:
-{job_description}
-"""
-
-        fallback = self.mock_fallback.generate_interview_questions(
-            resume_text,
-            job_title,
-            job_description,
+        main_skill = (
+            skills[0]
+            if skills
+            else "your main technical skill"
         )
 
-        return self._generate_json(prompt, fallback)
+        return [
+            {
+                "question": (
+                    f"Can you explain a project where you used "
+                    f"{main_skill}?"
+                ),
+                "type": "technical",
+                "expected_answer_points": [
+                    "What you built",
+                    "Your specific contribution",
+                    "Technical decisions",
+                    "Result",
+                ],
+                "preparation_tip": (
+                    "Use a real project and explain the technical "
+                    "decisions you made."
+                ),
+            },
+            {
+                "question": (
+                    "Tell me about a difficult technical problem "
+                    "you solved."
+                ),
+                "type": "behavioral",
+                "expected_answer_points": [
+                    "Problem",
+                    "Investigation",
+                    "Solution",
+                    "Result",
+                ],
+                "preparation_tip": (
+                    "Use the STAR method and focus on your own actions."
+                ),
+            },
+            {
+                "question": (
+                    f"Why are you interested in the {job_title} role?"
+                ),
+                "type": "background",
+                "expected_answer_points": [
+                    "Relevant skills",
+                    "Relevant projects",
+                    "Career direction",
+                ],
+                "preparation_tip": (
+                    "Connect your actual experience to the job requirements."
+                ),
+            },
+        ]
