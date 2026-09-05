@@ -68,6 +68,36 @@ export interface CareerInsights {
   suggested_actions: string[];
 }
 
+export interface ResumeCategoryScores {
+  ats_compatibility?: number;
+  keywords?: number;
+  skills?: number;
+  experience?: number;
+  achievements?: number;
+  formatting?: number;
+  completeness?: number;
+}
+
+export interface ResumeWeakBullet {
+  original: string;
+  problem: string;
+  suggestion: string;
+}
+
+export interface ResumeAnalysis {
+  ats_score: number;
+  score_label: string;
+  category_scores: ResumeCategoryScores;
+  matched_keywords: string[];
+  missing_keywords: string[];
+  detected_sections: string[];
+  issues: string[];
+  recommendations: string[];
+  strengths: string[];
+  summary: string;
+  weak_bullets: ResumeWeakBullet[];
+}
+
 export interface JobSeekerProfile {
   id: number;
   user_id: number;
@@ -85,6 +115,7 @@ export interface JobSeekerProfile {
   linkedin_url?: string;
   github_url?: string;
   resume_text?: string;
+  resume_analysis?: ResumeAnalysis;
   skills: string[];
   work_history: Experience[];
   education: Education[];
