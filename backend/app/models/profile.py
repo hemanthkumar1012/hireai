@@ -18,8 +18,8 @@ class JobSeekerProfile(Base):
     current_company = Column(String, nullable=True)
     current_role = Column(String, nullable=True)
     expected_salary = Column(String, nullable=True)
-    preferred_job_type = Column(String, nullable=True)  # FULL_TIME, PART_TIME, CONTRACT
-    preferred_work_mode = Column(String, nullable=True)  # REMOTE, ONSITE, HYBRID
+    preferred_job_type = Column(String, nullable=True)
+    preferred_work_mode = Column(String, nullable=True)
 
     # Links
     portfolio_url = Column(String, nullable=True)
@@ -28,6 +28,7 @@ class JobSeekerProfile(Base):
 
     # AI data
     resume_text = Column(Text, nullable=True)
+    resume_analysis = Column(JSON, nullable=True)
     skills = Column(JSON, default=list, nullable=False)
     work_history = Column(JSON, default=list, nullable=False)
     education = Column(JSON, default=list, nullable=False)
