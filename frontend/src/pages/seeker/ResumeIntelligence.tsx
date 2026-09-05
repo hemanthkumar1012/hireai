@@ -38,14 +38,26 @@ const categoryLabels: Record<string, string> = {
 };
 
 const getScoreClass = (score: number) => {
-  if (score >= 80) return 'text-emerald-400';
-  if (score >= 60) return 'text-amber-400';
+  if (score >= 80) {
+    return 'text-emerald-400';
+  }
+
+  if (score >= 60) {
+    return 'text-amber-400';
+  }
+
   return 'text-red-400';
 };
 
 const getScoreBarClass = (score: number) => {
-  if (score >= 80) return 'bg-emerald-500';
-  if (score >= 60) return 'bg-amber-500';
+  if (score >= 80) {
+    return 'bg-emerald-500';
+  }
+
+  if (score >= 60) {
+    return 'bg-amber-500';
+  }
+
   return 'bg-red-500';
 };
 
@@ -92,7 +104,9 @@ export const ResumeIntelligence: React.FC = () => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
 
-    const extension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+    const extension = file.name
+      .toLowerCase()
+      .slice(file.name.lastIndexOf('.'));
 
     if (!['.pdf', '.docx'].includes(extension)) {
       setAlert({
@@ -151,6 +165,7 @@ export const ResumeIntelligence: React.FC = () => {
         type: 'error',
         text: 'Please select your resume first.',
       });
+
       return;
     }
 
@@ -176,10 +191,28 @@ export const ResumeIntelligence: React.FC = () => {
         type: 'success',
         text: 'Resume analyzed successfully.',
       });
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.detail ||
-        'Unable to analyze the resume. Please try again.';
+    } catch (error: unknown) {
+      let message = 'Unable to analyze the resume. Please try again.';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error
+      ) {
+        const response = (
+          error as {
+            response?: {
+              data?: {
+                detail?: string;
+              };
+            };
+          }
+        ).response;
+
+        if (response?.data?.detail) {
+          message = response.data.detail;
+        }
+      }
 
       setAlert({
         type: 'error',
@@ -199,6 +232,10 @@ export const ResumeIntelligence: React.FC = () => {
   };
 
   const atsScore = analysis?.ats_score ?? 0;
+
+  const skills = profile?.skills ?? [];
+  const workHistory = profile?.work_history ?? [];
+  const education = profile?.education ?? [];
 
   if (loading) {
     return <LoadingSpinner />;
@@ -365,7 +402,7 @@ export const ResumeIntelligence: React.FC = () => {
                 </p>
 
                 <h3 className="text-2xl font-extrabold text-emerald-400 mt-1">
-                  {analysis.matched_keywords?.length || 0}
+                  {analysis.matched_keywords?.length ?? 0}
                 </h3>
 
                 <p className="text-[10px] text-slate-500 mt-1">
@@ -383,7 +420,7 @@ export const ResumeIntelligence: React.FC = () => {
                 </p>
 
                 <h3 className="text-2xl font-extrabold text-amber-400 mt-1">
-                  {analysis.missing_keywords?.length || 0}
+                  {analysis.missing_keywords?.length ?? 0}
                 </h3>
 
                 <p className="text-[10px] text-slate-500 mt-1">
@@ -697,74 +734,72 @@ export const ResumeIntelligence: React.FC = () => {
             </Card>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {profile?.skills?.length > 0 && (
-              <Card className="space-y-4">
-                <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
+          {skills.length > 0 && (
+            <Card className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-brand-border pb-3">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
 
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    Extracted Skills
-                  </h3>
-                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Extracted Skills
+                </h3>
+              </div>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.skills.map((skill) => (
-                    <Badge
-                      key={skill}
-                      variant="primary"
-                      className="text-[8px] uppercase font-bold tracking-wider px-2 py-0.5"
-                    >
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </Card>
-            )}
+              <div className="flex flex-wrap gap-1.5">
+                {skills.map((skill) => (
+                  <Badge
+                    key={skill}
+                    variant="primary"
+                    className="text-[8px] uppercase font-bold tracking-wider px-2 py-0.5"
+                  >
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+          )}
 
-            {profile?.work_history?.length > 0 && (
-              <Card className="space-y-4">
-                <div className="flex items-center gap-2 border-b border-brand-border pb-3">
-                  <Award className="w-4 h-4 text-indigo-400" />
+          {workHistory.length > 0 && (
+            <Card className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-brand-border pb-3">
+                <Award className="w-4 h-4 text-indigo-400" />
 
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    Work History
-                  </h3>
-                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Work History
+                </h3>
+              </div>
 
-                <div className="space-y-4">
-                  {profile.work_history.map((job, index) => (
-                    <div
-                      key={`${job.company}-${job.role}-${index}`}
-                      className="border-l-2 border-indigo-500/20 pl-3.5"
-                    >
-                      <p className="text-xs font-bold text-slate-300">
-                        {job.role}
+              <div className="space-y-4">
+                {workHistory.map((job, index) => (
+                  <div
+                    key={`${job.company}-${job.role}-${index}`}
+                    className="border-l-2 border-indigo-500/20 pl-3.5"
+                  >
+                    <p className="text-xs font-bold text-slate-300">
+                      {job.role}
+                    </p>
+
+                    <p className="text-[10px] text-indigo-400 font-semibold mt-0.5">
+                      {job.company}
+                    </p>
+
+                    {job.duration && (
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {job.duration}
                       </p>
+                    )}
 
-                      <p className="text-[10px] text-indigo-400 font-semibold mt-0.5">
-                        {job.company}
+                    {job.description && (
+                      <p className="text-[10px] text-slate-500 leading-relaxed mt-1">
+                        {job.description}
                       </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
-                      {job.duration && (
-                        <p className="text-[10px] text-slate-500 mt-0.5">
-                          {job.duration}
-                        </p>
-                      )}
-
-                      {job.description && (
-                        <p className="text-[10px] text-slate-500 leading-relaxed mt-1">
-                          {job.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-
-          {profile?.education?.length > 0 && (
+          {education.length > 0 && (
             <Card className="space-y-4">
               <div className="flex items-center gap-2 border-b border-brand-border pb-3">
                 <GraduationCap className="w-4 h-4 text-indigo-400" />
@@ -775,25 +810,25 @@ export const ResumeIntelligence: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {profile.education.map((education, index) => (
+                {education.map((item, index) => (
                   <div
-                    key={`${education.school}-${education.degree}-${index}`}
+                    key={`${item.school}-${item.degree}-${index}`}
                     className="border-l-2 border-indigo-500/20 pl-3.5"
                   >
                     <p className="text-xs font-bold text-slate-300">
-                      {education.degree}
-                      {education.field_of_study
-                        ? ` in ${education.field_of_study}`
+                      {item.degree}
+                      {item.field_of_study
+                        ? ` in ${item.field_of_study}`
                         : ''}
                     </p>
 
                     <p className="text-[10px] text-indigo-400 font-semibold mt-0.5">
-                      {education.school}
+                      {item.school}
                     </p>
 
-                    {education.year && (
+                    {item.year && (
                       <p className="text-[10px] text-slate-500 mt-0.5">
-                        {education.year}
+                        {item.year}
                       </p>
                     )}
                   </div>
