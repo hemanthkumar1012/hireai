@@ -1,9 +1,37 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 
 from app.core.config import settings
+from app.core.database import engine
 from app.api import auth, jobs, profiles, applications, companies
+
+
+def ensure_runtime_schema() -> None:
+    try:
+        inspector = inspect(engine)
+
+        if not inspector.has_table("job_seeker_profiles"):
+            return
+
+        columns = {
+            column["name"]
+            for column in inspector.get_columns("job_seeker_profiles")
+        }
+
+        if "resume_analysis" not in columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "ALTER TABLE job_seeker_profiles "
+                        "ADD COLUMN resume_analysis JSON"
+                    )
+                )
+    except Exception:
+        pass
+
+
+ensure_runtime_schema()
 
 
 app = FastAPI(
