@@ -4,9 +4,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from alembic import command
-from alembic.config import Config
-
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.models import *  # noqa: F401,F403
@@ -16,18 +13,10 @@ from app.api import auth, jobs, profiles, applications, companies
 logger = logging.getLogger(__name__)
 
 
-def initialize_database() -> None:
-    try:
-        Base.metadata.create_all(bind=engine)
-
-        alembic_config = Config("alembic.ini")
-        command.upgrade(alembic_config, "head")
-
-    except Exception:
-        logger.exception("Database initialization failed")
-
-
-initialize_database()
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception:
+    logger.exception("Database initialization failed")
 
 
 app = FastAPI(
