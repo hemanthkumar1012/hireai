@@ -37,6 +37,8 @@ def upgrade() -> None:
             ),
         )
 
+    inspector = sa.inspect(connection)
+
     existing_job_indexes = {
         index["name"]
         for index in inspector.get_indexes("jobs")
@@ -52,7 +54,11 @@ def upgrade() -> None:
     if not inspector.has_table("saved_jobs"):
         op.create_table(
             "saved_jobs",
-            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column(
+                "id",
+                sa.Integer(),
+                primary_key=True,
+            ),
             sa.Column(
                 "job_id",
                 sa.Integer(),
@@ -60,7 +66,7 @@ def upgrade() -> None:
                 nullable=False,
             ),
             sa.Column(
-                "seeker_id",
+                "user_id",
                 sa.Integer(),
                 sa.ForeignKey("users.id", ondelete="CASCADE"),
                 nullable=False,
@@ -72,9 +78,9 @@ def upgrade() -> None:
                 server_default=sa.func.now(),
             ),
             sa.UniqueConstraint(
+                "user_id",
                 "job_id",
-                "seeker_id",
-                name="uq_saved_job_seeker",
+                name="uq_saved_job",
             ),
         )
 
@@ -92,11 +98,11 @@ def upgrade() -> None:
             ["job_id"],
         )
 
-    if "ix_saved_jobs_seeker_id" not in existing_saved_job_indexes:
+    if "ix_saved_jobs_user_id" not in existing_saved_job_indexes:
         op.create_index(
-            "ix_saved_jobs_seeker_id",
+            "ix_saved_jobs_user_id",
             "saved_jobs",
-            ["seeker_id"],
+            ["user_id"],
         )
 
 
@@ -110,9 +116,9 @@ def downgrade() -> None:
             for index in inspector.get_indexes("saved_jobs")
         }
 
-        if "ix_saved_jobs_seeker_id" in existing_indexes:
+        if "ix_saved_jobs_user_id" in existing_indexes:
             op.drop_index(
-                "ix_saved_jobs_seeker_id",
+                "ix_saved_jobs_user_id",
                 table_name="saved_jobs",
             )
 
@@ -122,10 +128,7 @@ def downgrade() -> None:
                 table_name="saved_jobs",
             )
 
-        inspector = sa.inspect(connection)
-
-        if inspector.has_table("saved_jobs"):
-            op.drop_table("saved_jobs")
+        op.drop_table("saved_jobs")
 
     inspector = sa.inspect(connection)
 
