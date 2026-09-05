@@ -1,37 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 
-from app.core.config import settings
-from app.core.database import engine
 from app.api import auth, jobs, profiles, applications, companies
-
-
-def ensure_runtime_schema() -> None:
-    try:
-        inspector = inspect(engine)
-
-        if not inspector.has_table("job_seeker_profiles"):
-            return
-
-        columns = {
-            column["name"]
-            for column in inspector.get_columns("job_seeker_profiles")
-        }
-
-        if "resume_analysis" not in columns:
-            with engine.begin() as connection:
-                connection.execute(
-                    text(
-                        "ALTER TABLE job_seeker_profiles "
-                        "ADD COLUMN resume_analysis JSON"
-                    )
-                )
-    except Exception:
-        pass
-
-
-ensure_runtime_schema()
+from app.core.config import settings
+from app.core.database import SessionLocal
 
 
 app = FastAPI(
@@ -87,9 +60,9 @@ app.include_router(
 @app.get("/", tags=["Health"])
 def root():
     return {
-        "service": "ApplyRight API",
+        "service": settings.PROJECT_NAME,
         "status": "running",
-        "health": "/health",
+        "health": f"{settings.API_V1_STR}/health",
         "docs": "/docs",
     }
 
@@ -99,26 +72,27 @@ def root_head():
     return {}
 
 
-@app.get("/health", tags=["Health"])
+@app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
 def health_check():
-    from app.core.database import SessionLocal
-
-    database_status = "connected"
-
     try:
         with SessionLocal() as db:
             db.execute(text("SELECT 1"))
+
+        return {
+            "status": "healthy",
+            "service": settings.PROJECT_NAME,
+            "database": "connected",
+        }
+
     except Exception:
-        database_status = "unavailable"
-
-    return {
-        "status": "healthy" if database_status == "connected" else "degraded",
-        "service": settings.PROJECT_NAME,
-        "database": database_status,
-    }
+        return {
+            "status": "degraded",
+            "service": settings.PROJECT_NAME,
+            "database": "unavailable",
+        }
 
 
-@app.head("/health", tags=["Health"])
+@app.head(f"{settings.API_V1_STR}/health", tags=["Health"])
 def health_head():
     return health_check()
 
