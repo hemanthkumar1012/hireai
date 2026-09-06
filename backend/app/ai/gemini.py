@@ -1,89 +1,90 @@
+import json
 import re
 from typing import Any, Dict, List, Optional
 
+from google import genai
+
+from app.ai.mock import MockAIService
 from app.ai.service import AIService
 
 
-class MockAIService(AIService):
+class GeminiAIService(AIService):
+    def __init__(self, api_key: str):
+        self.client = genai.Client(api_key=api_key)
+        self.mock_fallback = MockAIService()
+
+    def _generate_json(
+        self,
+        prompt: str,
+        fallback: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+            )
+
+            text = (response.text or "").strip()
+
+            if text.startswith("```"):
+                text = re.sub(
+                    r"^```(?:json)?\s*|\s*```$",
+                    "",
+                    text,
+                    flags=re.IGNORECASE,
+                ).strip()
+
+            result = json.loads(text)
+
+            if not isinstance(result, dict):
+                return fallback
+
+            return result
+
+        except Exception:
+            return fallback
 
     def parse_resume(self, resume_text: str) -> Dict[str, Any]:
-        text = resume_text.lower()
+        fallback = self.mock_fallback.parse_resume(resume_text)
 
-        skills = [
-            "python",
-            "fastapi",
-            "django",
-            "flask",
-            "react",
-            "typescript",
-            "javascript",
-            "html",
-            "css",
-            "tailwind",
-            "next.js",
-            "node.js",
-            "express",
-            "sql",
-            "postgresql",
-            "mysql",
-            "mongodb",
-            "redis",
-            "docker",
-            "kubernetes",
-            "aws",
-            "gcp",
-            "azure",
-            "git",
-            "ci/cd",
-            "celery",
-            "graphql",
-            "rest api",
-            "pytorch",
-            "tensorflow",
-            "agile",
-        ]
+        prompt = f"""
+Analyze the following resume and return only valid JSON.
 
-        extracted_skills = []
+Return exactly this structure:
+{{
+  "skills": [],
+  "work_history": [],
+  "education": [],
+  "career_goals": ""
+}}
 
-        for skill in skills:
-            pattern = r"(?<![a-z0-9])" + re.escape(skill) + r"(?![a-z0-9])"
+Rules:
+- Extract only information that actually appears in the resume.
+- Never invent companies, job titles, dates, degrees, institutions, skills, or achievements.
+- Keep work_history and education as arrays of objects.
+- If information is missing, use an empty string or empty array.
+- Return JSON only.
 
-            if re.search(pattern, text):
-                extracted_skills.append(
-                    skill.upper() if len(skill) <= 3 else skill.title()
-                )
+Resume:
+{resume_text}
+"""
 
-        work_history = []
-
-        if "react" in text or "typescript" in text:
-            work_history.append(
-                {
-                    "company": "Not specified",
-                    "role": "Frontend Developer",
-                    "duration": "Not specified",
-                    "description": "Experience with React and TypeScript.",
-                }
-            )
-
-        if "python" in text or "fastapi" in text or "django" in text:
-            work_history.append(
-                {
-                    "company": "Not specified",
-                    "role": "Backend Developer",
-                    "duration": "Not specified",
-                    "description": "Experience with Python-based backend development.",
-                }
-            )
-
-        education = []
-
-        career_goals = ""
+        result = self._generate_json(prompt, fallback)
 
         return {
-            "skills": extracted_skills,
-            "work_history": work_history,
-            "education": education,
-            "career_goals": career_goals,
+            "skills": result.get("skills", fallback.get("skills", [])),
+            "work_history": result.get(
+                "work_history",
+                fallback.get("work_history", []),
+            ),
+            "education": result.get(
+                "education",
+                fallback.get("education", []),
+            ),
+            "career_goals": result.get(
+                "career_goals",
+                fallback.get("career_goals", ""),
+            ),
         }
 
     def analyze_resume(
@@ -91,147 +92,86 @@ class MockAIService(AIService):
         resume_text: str,
         job_description: Optional[str] = None,
     ) -> Dict[str, Any]:
-
-        text = resume_text.lower()
-
-        strengths = []
-        issues = []
-        recommendations = []
-        missing_keywords = []
-        weak_bullets = []
-
-        if re.search(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b", resume_text):
-            strengths.append("The resume includes an email address.")
-        else:
-            issues.append("No email address was detected.")
-
-        if re.search(r"\b(?:20\d{2})\b", resume_text):
-            strengths.append("The resume contains date information.")
-        else:
-            issues.append("Work or education dates were not clearly detected.")
-
-        if any(word in text for word in [
-            "experience",
-            "work experience",
-            "professional experience",
-        ]):
-            strengths.append("A work experience section is present.")
-        else:
-            issues.append("A clear work experience section is missing.")
-            recommendations.append(
-                "Add a clearly labeled Work Experience section."
-            )
-
-        if "skills" in text or "technical skills" in text:
-            strengths.append("A skills section is present.")
-        else:
-            issues.append("A dedicated skills section was not detected.")
-            recommendations.append(
-                "Add a Technical Skills section with the technologies you actually use."
-            )
-
-        if "education" in text:
-            strengths.append("An education section is present.")
-        else:
-            issues.append("An education section was not detected.")
-            recommendations.append(
-                "Add your degree, institution, field of study, and graduation year."
-            )
-
-        if job_description:
-            resume_words = set(re.findall(r"[a-zA-Z0-9+#./-]+", text))
-            job_words = set(
-                re.findall(
-                    r"[a-zA-Z0-9+#./-]+",
-                    job_description.lower(),
-                )
-            )
-
-            important_words = {
-                word
-                for word in job_words
-                if len(word) >= 3
-            }
-
-            missing_keywords = sorted(
-                word
-                for word in important_words
-                if word not in resume_words
-            )[:20]
-
-        weak_phrases = [
-            "responsible for",
-            "worked on",
-            "helped with",
-            "duties included",
-            "worked with",
-        ]
-
-        for phrase in weak_phrases:
-            if phrase in text:
-                weak_bullets.append(
-                    {
-                        "original": phrase,
-                        "problem": "The wording is generic and does not clearly show ownership or results.",
-                        "suggestion": "Start the bullet with a strong action verb and describe the actual result.",
-                    }
-                )
-
-        if not any(
-            word in text
-            for word in [
-                "%",
-                "users",
-                "customers",
-                "reduced",
-                "increased",
-                "improved",
-                "optimized",
-            ]
-        ):
-            issues.append(
-                "Few measurable achievements were detected."
-            )
-
-            recommendations.append(
-                "Add real metrics to strong achievements when you can verify them."
-            )
-
-        if len(extracted_skills := self.parse_resume(resume_text)["skills"]) == 0:
-            issues.append(
-                "No common technical skills were detected."
-            )
-
-            recommendations.append(
-                "Add the technical skills that are genuinely relevant to your target roles."
-            )
-
-        if job_description and missing_keywords:
-            recommendations.append(
-                "Review the job description and naturally include relevant missing keywords when they accurately describe your experience."
-            )
-
-        recommendations.extend(
-            [
-                "Use clear section headings and concise bullet points.",
-                "Focus experience bullets on what you built, changed, improved, or delivered.",
-                "Do not add technologies, achievements, or metrics that you cannot support.",
-            ]
+        fallback = self.mock_fallback.analyze_resume(
+            resume_text,
+            job_description,
         )
 
-        summary = (
-            "The resume has been analyzed using the application's fallback "
-            "resume review rules. Improve the issues identified above before "
-            "applying."
+        job_context = (
+            f"""
+Job description:
+{job_description}
+"""
+            if job_description
+            else ""
         )
+
+        prompt = f"""
+Analyze this resume and return only valid JSON.
+
+The numeric ATS score must NOT be calculated by you.
+The application calculates the ATS score separately.
+
+Return exactly:
+{{
+  "summary": "",
+  "strengths": [],
+  "issues": [],
+  "recommendations": [],
+  "missing_keywords": [],
+  "weak_bullets": [
+    {{
+      "original": "",
+      "problem": "",
+      "suggestion": ""
+    }}
+  ]
+}}
+
+Rules:
+- Use only facts supported by the resume.
+- Never invent skills, companies, education, metrics, achievements, or experience.
+- Do not create fake numbers.
+- Suggestions must be realistic and clearly identified as suggestions.
+- For weak_bullets, use actual weak bullets from the resume when possible.
+- If a bullet is already strong, do not rewrite it.
+- Missing keywords should only be suggested when they are genuinely relevant to the supplied job description.
+- Do not calculate or mention an ATS score.
+- Return JSON only.
+
+Resume:
+{resume_text}
+
+{job_context}
+"""
+
+        result = self._generate_json(prompt, fallback)
 
         return {
-            "summary": summary,
-            "strengths": strengths[:8],
-            "issues": issues[:10],
-            "recommendations": recommendations[:10],
-            "missing_keywords": missing_keywords[:20],
-            "weak_bullets": weak_bullets[:8],
+            "summary": result.get(
+                "summary",
+                fallback.get("summary", ""),
+            ),
+            "strengths": result.get(
+                "strengths",
+                fallback.get("strengths", []),
+            ),
+            "issues": result.get(
+                "issues",
+                fallback.get("issues", []),
+            ),
+            "recommendations": result.get(
+                "recommendations",
+                fallback.get("recommendations", []),
+            ),
+            "missing_keywords": result.get(
+                "missing_keywords",
+                fallback.get("missing_keywords", []),
+            ),
+            "weak_bullets": result.get(
+                "weak_bullets",
+                fallback.get("weak_bullets", []),
+            ),
         }
 
     def match_job(
@@ -241,86 +181,107 @@ class MockAIService(AIService):
         job_description: str,
         job_skills: List[str],
     ) -> Dict[str, Any]:
-
-        parsed = self.parse_resume(resume_text)
-
-        candidate_skills = [
-            skill.lower()
-            for skill in parsed["skills"]
-        ]
-
-        matched_skills = []
-        missing_skills = []
-
-        for skill in job_skills:
-            skill_lower = skill.lower()
-
-            if any(
-                skill_lower == candidate
-                or skill_lower in candidate
-                or candidate in skill_lower
-                for candidate in candidate_skills
-            ):
-                matched_skills.append(skill)
-            else:
-                missing_skills.append(skill)
-
-        if job_skills:
-            skills_score = int(
-                len(matched_skills) / len(job_skills) * 80
-            )
-        else:
-            skills_score = 50
-
-        description = job_description.lower()
-
-        context_matches = sum(
-            1
-            for skill in candidate_skills
-            if skill in description
+        fallback = self.mock_fallback.match_job(
+            resume_text,
+            job_title,
+            job_description,
+            job_skills,
         )
 
-        context_score = min(20, context_matches * 4)
+        prompt = f"""
+Evaluate how well the resume matches the job.
 
-        match_score = min(
-            100,
-            max(30, skills_score + context_score),
+Return only valid JSON:
+{{
+  "match_score": 0,
+  "match_explanation": {{
+    "summary": "",
+    "matched_skills": [],
+    "missing_skills": [],
+    "strengths": [],
+    "weaknesses": []
+  }}
+}}
+
+Rules:
+- Use only facts supported by the resume and job description.
+- match_score must be an integer from 0 to 100.
+- Do not invent candidate experience.
+- Return JSON only.
+
+Job title:
+{job_title}
+
+Job description:
+{job_description}
+
+Required job skills:
+{json.dumps(job_skills)}
+
+Resume:
+{resume_text}
+"""
+
+        result = self._generate_json(prompt, fallback)
+
+        explanation = result.get(
+            "match_explanation",
+            fallback.get("match_explanation", {}),
         )
 
-        strengths = []
+        if not isinstance(explanation, dict):
+            explanation = fallback.get("match_explanation", {})
 
-        if matched_skills:
-            strengths.append(
-                f"Relevant skills include {', '.join(matched_skills[:3])}."
-            )
-        else:
-            strengths.append(
-                "The candidate has a general technical background."
-            )
+        score = result.get(
+            "match_score",
+            fallback.get("match_score", 0),
+        )
 
-        weaknesses = []
+        try:
+            score = int(score)
+        except (TypeError, ValueError):
+            score = fallback.get("match_score", 0)
 
-        if missing_skills:
-            weaknesses.append(
-                f"Missing skills include {', '.join(missing_skills[:3])}."
-            )
-        else:
-            weaknesses.append(
-                "No major skill gaps were identified."
-            )
+        score = max(0, min(100, score))
 
         return {
-            "match_score": match_score,
+            "match_score": score,
             "match_explanation": {
-                "summary": (
-                    f"The candidate has approximately "
-                    f"{match_score}% alignment with the "
-                    f"{job_title} position."
+                "summary": explanation.get(
+                    "summary",
+                    fallback["match_explanation"].get(
+                        "summary",
+                        "",
+                    ),
                 ),
-                "matched_skills": matched_skills,
-                "missing_skills": missing_skills,
-                "strengths": strengths,
-                "weaknesses": weaknesses,
+                "matched_skills": explanation.get(
+                    "matched_skills",
+                    fallback["match_explanation"].get(
+                        "matched_skills",
+                        [],
+                    ),
+                ),
+                "missing_skills": explanation.get(
+                    "missing_skills",
+                    fallback["match_explanation"].get(
+                        "missing_skills",
+                        [],
+                    ),
+                ),
+                "strengths": explanation.get(
+                    "strengths",
+                    fallback["match_explanation"].get(
+                        "strengths",
+                        [],
+                    ),
+                ),
+                "weaknesses": explanation.get(
+                    "weaknesses",
+                    fallback["match_explanation"].get(
+                        "weaknesses",
+                        [],
+                    ),
+                ),
             },
         }
 
@@ -330,44 +291,49 @@ class MockAIService(AIService):
         target_role: str,
         target_skills: List[str],
     ) -> Dict[str, Any]:
+        fallback = self.mock_fallback.analyze_career_gaps(
+            current_skills,
+            target_role,
+            target_skills,
+        )
 
-        current = {
-            skill.lower()
-            for skill in current_skills
-        }
+        prompt = f"""
+Identify skill gaps between a candidate's current skills and a target role.
 
-        gaps = [
-            skill
-            for skill in target_skills
-            if skill.lower() not in current
-        ]
+Return only valid JSON:
+{{
+  "gaps": [],
+  "recommendations": [],
+  "suggested_actions": []
+}}
 
-        recommendations = []
+Do not invent current skills.
 
-        if gaps:
-            recommendations.append(
-                f"Build a practical project using {gaps[0]}."
-            )
+Current skills:
+{json.dumps(current_skills)}
 
-            if len(gaps) > 1:
-                recommendations.append(
-                    f"Strengthen your knowledge of {gaps[1]} through a project or structured learning."
-                )
+Target role:
+{target_role}
 
-        else:
-            recommendations.append(
-                f"Continue building production-level experience relevant to {target_role}."
-            )
+Target skills:
+{json.dumps(target_skills)}
+"""
 
-        suggested_actions = [
-            "Build and document a practical project using the target stack.",
-            "Contribute to relevant open-source projects.",
-        ]
+        result = self._generate_json(prompt, fallback)
 
         return {
-            "gaps": gaps,
-            "recommendations": recommendations,
-            "suggested_actions": suggested_actions,
+            "gaps": result.get(
+                "gaps",
+                fallback.get("gaps", []),
+            ),
+            "recommendations": result.get(
+                "recommendations",
+                fallback.get("recommendations", []),
+            ),
+            "suggested_actions": result.get(
+                "suggested_actions",
+                fallback.get("suggested_actions", []),
+            ),
         }
 
     def generate_interview_questions(
@@ -376,62 +342,50 @@ class MockAIService(AIService):
         job_title: str,
         job_description: str,
     ) -> List[Dict[str, Any]]:
-
-        parsed = self.parse_resume(resume_text)
-        skills = parsed["skills"]
-
-        main_skill = (
-            skills[0]
-            if skills
-            else "your main technical skill"
+        fallback = self.mock_fallback.generate_interview_questions(
+            resume_text,
+            job_title,
+            job_description,
         )
 
-        return [
-            {
-                "question": (
-                    f"Can you explain a project where you used "
-                    f"{main_skill}?"
-                ),
-                "type": "technical",
-                "expected_answer_points": [
-                    "What you built",
-                    "Your specific contribution",
-                    "Technical decisions",
-                    "Result",
-                ],
-                "preparation_tip": (
-                    "Use a real project and explain the technical "
-                    "decisions you made."
-                ),
-            },
-            {
-                "question": (
-                    "Tell me about a difficult technical problem "
-                    "you solved."
-                ),
-                "type": "behavioral",
-                "expected_answer_points": [
-                    "Problem",
-                    "Investigation",
-                    "Solution",
-                    "Result",
-                ],
-                "preparation_tip": (
-                    "Use the STAR method and focus on your own actions."
-                ),
-            },
-            {
-                "question": (
-                    f"Why are you interested in the {job_title} role?"
-                ),
-                "type": "background",
-                "expected_answer_points": [
-                    "Relevant skills",
-                    "Relevant projects",
-                    "Career direction",
-                ],
-                "preparation_tip": (
-                    "Connect your actual experience to the job requirements."
-                ),
-            },
-        ]
+        prompt = f"""
+Generate interview questions based on the candidate's actual resume
+and the supplied job.
+
+Return only valid JSON:
+[
+  {{
+    "question": "",
+    "type": "",
+    "expected_answer_points": [],
+    "preparation_tip": ""
+  }}
+]
+
+Rules:
+- Ask questions relevant to the actual resume.
+- Do not invent experience or projects.
+- Return 5 questions maximum.
+- Return JSON only.
+
+Job title:
+{job_title}
+
+Job description:
+{job_description}
+
+Resume:
+{resume_text}
+"""
+
+        result = self._generate_json(
+            prompt,
+            {"questions": fallback},
+        )
+
+        questions = result.get("questions", result)
+
+        if not isinstance(questions, list):
+            return fallback
+
+        return questions[:5]
