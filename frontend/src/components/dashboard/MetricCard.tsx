@@ -18,27 +18,40 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value,
   icon: Icon,
   description,
-  trend
+  trend,
 }) => {
   return (
-    <Card className="flex flex-col justify-between" hoverEffect>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-100 mt-2 tracking-tight">{value}</h3>
+    <Card
+      className="min-h-[148px] flex flex-col justify-between border-[#E5E5EA] bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
+      hoverEffect
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6E6E73]">
+            {title}
+          </p>
+          <h3 className="mt-2 text-[30px] leading-none font-bold tracking-[-0.03em] text-[#1D1D1F]">
+            {value}
+          </h3>
         </div>
-        <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg">
-          <Icon className="w-5 h-5" />
+
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#E4DEFF] bg-[#F3F0FF] text-[#6E5AE6]">
+          <Icon className="h-5 w-5" strokeWidth={1.8} />
         </div>
       </div>
+
       {(description || trend) && (
-        <div className="mt-4 flex items-center gap-2 text-xs">
+        <div className="mt-5 flex min-h-5 items-center gap-2 text-[12px]">
           {trend && (
-            <span className={`font-semibold ${trend.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span
+              className={`font-semibold ${
+                trend.isPositive ? 'text-[#248A3D]' : 'text-[#C9342C]'
+              }`}
+            >
               {trend.value}
             </span>
           )}
-          {description && <span className="text-slate-400">{description}</span>}
+          {description && <span className="text-[#6E6E73]">{description}</span>}
         </div>
       )}
     </Card>
