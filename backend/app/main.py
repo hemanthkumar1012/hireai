@@ -60,9 +60,9 @@ app.include_router(
 @app.get("/", tags=["Health"])
 def root():
     return {
-        "service": settings.PROJECT_NAME,
+        "service": "ApplyRight API",
         "status": "running",
-        "health": f"{settings.API_V1_STR}/health",
+        "health": "/health",
         "docs": "/docs",
     }
 
@@ -72,7 +72,7 @@ def root_head():
     return {}
 
 
-@app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
+@app.get("/health", tags=["Health"])
 def health_check():
     try:
         with SessionLocal() as db:
@@ -92,8 +92,18 @@ def health_check():
         }
 
 
-@app.head(f"{settings.API_V1_STR}/health", tags=["Health"])
+@app.head("/health", tags=["Health"])
 def health_head():
+    return health_check()
+
+
+@app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
+def api_health_check():
+    return health_check()
+
+
+@app.head(f"{settings.API_V1_STR}/health", tags=["Health"])
+def api_health_head():
     return health_check()
 
 
