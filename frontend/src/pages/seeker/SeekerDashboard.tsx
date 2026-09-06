@@ -1,18 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  ArrowRight,
+  Award,
+  Bookmark,
+  Briefcase,
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  FileText,
+  MapPin,
+  Sparkles,
+  Target,
+  UserRound,
+} from 'lucide-react';
 import { MetricCard } from '../../components/dashboard/MetricCard';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
-import { applicationsApi, profilesApi, jobsApi } from '../../services/api';
-import { Application, JobSeekerProfile, Job } from '../../types';
-import { 
-  FileText, Cpu, Compass, Briefcase, Plus, AlertCircle, Sparkles, 
-  ArrowRight, Users, Award, Calendar, Bookmark, ShieldCheck, CheckCircle2, ClipboardList
-} from 'lucide-react';
-import { MatchScoreMetric } from '../../components/dashboard/MatchScoreMetric';
+import { applicationsApi, jobsApi, profilesApi } from '../../services/api';
+import { Application, Job, JobSeekerProfile } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+
+const statusConfig = [
+  {
+    key: 'APPLIED',
+    label: 'Applied',
+    color: '#6E5AE6',
+    background: '#F3F0FF',
+    border: '#E2DBFF',
+  },
+  {
+    key: 'SCREENING',
+    label: 'Screening',
+    color: '#0071E3',
+    background: '#EEF6FF',
+    border: '#D8EBFF',
+  },
+  {
+    key: 'INTERVIEW',
+    label: 'Interview',
+    color: '#B86B00',
+    background: '#FFF7E8',
+    border: '#F6E4BD',
+  },
+  {
+    key: 'OFFER',
+    label: 'Offer',
+    color: '#248A3D',
+    background: '#EFFAF1',
+    border: '#D6EEDB',
+  },
+] as const;
 
 export const SeekerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,21 +59,23 @@ export const SeekerDashboard: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [profile, setProfile] = useState<JobSeekerProfile | null>(null);
   const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
 
   const fetchDashboardData = async () => {
     try {
       const [appsRes, profileRes, jobsRes] = await Promise.all([
         applicationsApi.listSeeker(),
         profilesApi.getMyProfile(),
-        jobsApi.list()
+        jobsApi.list(),
       ]);
+
       setApplications(appsRes);
       setProfile(profileRes);
       setRecommendedJobs(jobsRes.slice(0, 3));
-    } catch (err) {
-      console.error("Failed to load seeker dashboard telemetry.", err);
+    } catch (error) {
+      console.error('Failed to load seeker dashboard.', error);
     } finally {
       setLoading(false);
     }
@@ -45,371 +86,464 @@ export const SeekerDashboard: React.FC = () => {
   }, []);
 
   const handleSaveJob = (jobId: number) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(savedJobs.filter(id => id !== jobId));
-    } else {
-      setSavedJobs([...savedJobs, jobId]);
-    }
+    setSavedJobs((current) =>
+      current.includes(jobId)
+        ? current.filter((id) => id !== jobId)
+        : [...current, jobId],
+    );
   };
 
   const handleApplyJob = async (jobId: number) => {
+    setApplyingJobId(jobId);
+
     try {
       await applicationsApi.apply(jobId);
-      alert("Application submitted! Match score evaluated.");
-      fetchDashboardData();
-    } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to submit application.");
+      window.alert('Application submitted successfully.');
+      await fetchDashboardData();
+    } catch (error: any) {
+      window.alert(
+        error?.response?.data?.detail || 'Unable to submit the application.',
+      );
+    } finally {
+      setApplyingJobId(null);
     }
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
-  const seekerName = authState.user?.full_name || "Hemanth";
-  
-  // Pipeline categorization
-  const pipeline = {
-    applied: applications.filter(a => a.status === 'APPLIED'),
-    screening: applications.filter(a => a.status === 'SCREENING'),
-    interview: applications.filter(a => a.status === 'INTERVIEW'),
-    offer: applications.filter(a => a.status === 'OFFER' || a.status === 'HIRED')
+  const seekerName = authState.user?.full_name || 'there';
+  const completionPercentage = profile?.profile_completion || 82;
+  const resumeReady = Boolean(profile?.resume_text || profile?.resume_analysis);
+  const profileScore = profile?.resume_analysis?.ats_score || 85;
+  const interviewCount = applications.filter(
+    (application) => application.status === 'INTERVIEW',
+  ).length;
+
+  const statusApplications = (status: string) => {
+    if (status === 'OFFER') {
+      return applications.filter(
+        (application) =>
+          application.status === 'OFFER' || application.status === 'HIRED',
+      );
+    }
+
+    return applications.filter((application) => application.status === status);
   };
 
-  // Symmetrical profile completion circular SVG calculation
-  const completionPercentage = 82;
-  const radius = 22;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (completionPercentage / 100) * circumference;
+  const ringRadius = 34;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset =
+    ringCircumference - (completionPercentage / 100) * ringCircumference;
 
   return (
-    <div className="space-y-6">
-      {/* Personalized Welcome Banner & Profile Completion Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Welcome Section */}
-        <div className="lg:col-span-8 bg-gradient-to-r from-indigo-950/40 via-violet-950/20 to-brand-surface1 border border-indigo-500/10 rounded-2xl p-6 relative overflow-hidden shadow-xl flex flex-col justify-between min-h-[140px]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full filter blur-2xl opacity-40 pointer-events-none" />
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-100 tracking-tight">Good morning, {seekerName}</h2>
-            <p className="text-xs text-indigo-300 font-semibold mt-1">Your AI Career Console is synchronized. Explore matched vacancies and review gap diagnostics.</p>
-          </div>
-          <div className="flex gap-2 items-center text-[10px] text-slate-400 font-bold tracking-wide mt-4 uppercase">
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Resume Parsed</span>
-            <span className="text-slate-650">•</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 8 Gaps Identified</span>
+    <div className="space-y-7 pb-10">
+      <section className="grid gap-5 xl:grid-cols-[1.55fr_0.75fr]">
+        <div className="relative overflow-hidden rounded-[28px] border border-[#E6E0FF] bg-white px-6 py-7 shadow-[0_12px_32px_rgba(40,35,65,0.06)] sm:px-8">
+          <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[#EEE9FF] blur-3xl" />
+          <div className="relative">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#E5DEF9] bg-[#F8F6FF] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6655C8]">
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
+              AI career workspace
+            </div>
+
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <h1 className="text-[32px] font-bold tracking-[-0.04em] text-[#1D1D1F] sm:text-[40px]">
+                  Good morning, {seekerName}
+                </h1>
+                <p className="mt-3 max-w-xl text-[14px] leading-6 text-[#6E6E73] sm:text-[15px]">
+                  Your career workspace is ready. Review stronger matches, close skill gaps, and keep every application moving forward.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/seeker/profile')}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#1D1D1F] px-5 py-3 text-[12px] font-semibold text-white transition hover:bg-[#303035]"
+              >
+                <UserRound className="h-4 w-4" strokeWidth={1.8} />
+                Open profile
+              </button>
+            </div>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#DDEBDD] bg-[#F4FBF5] px-3.5 py-2 text-[11px] font-semibold text-[#248A3D]">
+                <CheckCircle2 className="h-4 w-4" strokeWidth={1.8} />
+                {resumeReady ? 'Resume analyzed' : 'Resume not analyzed'}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#E7E7EB] bg-[#FAFAFC] px-3.5 py-2 text-[11px] font-semibold text-[#5D5D64]">
+                <Target className="h-4 w-4" strokeWidth={1.8} />
+                {applications.length} applications in progress
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Profile Completion Card */}
-        <div className="lg:col-span-4 bg-brand-surface1 border border-brand-border rounded-2xl p-5 flex items-center justify-between shadow-xl">
-          <div className="space-y-1">
-            <h4 className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Profile Readiness</h4>
-            <h3 className="text-lg font-extrabold text-slate-100 mt-1">{completionPercentage}% Completed</h3>
-            <p className="text-[10px] text-slate-400 leading-relaxed mt-1">Configure target role settings to achieve 100% calibration.</p>
-          </div>
-          
-          {/* Radial SVG Gauge */}
-          <div className="relative flex items-center justify-center shrink-0">
-            <svg className="transform -rotate-90" width="56" height="56">
-              <circle className="stroke-slate-800" strokeWidth="4" fill="transparent" r={radius} cx="28" cy="28" />
-              <circle
-                className="stroke-indigo-500 transition-all duration-1000"
-                strokeWidth="4"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                fill="transparent"
-                r={radius}
-                cx="28"
-                cy="28"
-              />
-            </svg>
-            <span className="absolute text-[10px] font-extrabold text-indigo-400">{completionPercentage}%</span>
+        <div className="rounded-[28px] border border-[#E5E5EA] bg-white px-6 py-6 shadow-[0_12px_32px_rgba(40,35,65,0.05)]">
+          <div className="flex h-full items-center justify-between gap-5">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8A8A91]">
+                Profile readiness
+              </p>
+              <p className="mt-2 text-[25px] font-bold tracking-[-0.03em] text-[#1D1D1F]">
+                {completionPercentage}% complete
+              </p>
+              <p className="mt-2 max-w-[220px] text-[12px] leading-5 text-[#6E6E73]">
+                Finish your profile to improve search relevance and recruiter visibility.
+              </p>
+              <Link
+                to="/seeker/profile"
+                className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#6E5AE6]"
+              >
+                Complete profile
+                <ChevronRight className="h-4 w-4" strokeWidth={1.8} />
+              </Link>
+            </div>
+
+            <div className="relative flex h-[94px] w-[94px] shrink-0 items-center justify-center">
+              <svg className="-rotate-90" width="94" height="94" viewBox="0 0 94 94">
+                <circle
+                  cx="47"
+                  cy="47"
+                  r={ringRadius}
+                  fill="none"
+                  stroke="#EDEDF0"
+                  strokeWidth="7"
+                />
+                <circle
+                  cx="47"
+                  cy="47"
+                  r={ringRadius}
+                  fill="none"
+                  stroke="#6E5AE6"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  strokeDasharray={ringCircumference}
+                  strokeDashoffset={ringOffset}
+                />
+              </svg>
+              <span className="absolute text-[14px] font-bold text-[#1D1D1F]">
+                {completionPercentage}%
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Metric Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          title="Job Matches"
+          title="Job matches"
           value={recommendedJobs.length + 9}
           icon={Briefcase}
-          description="Compatible active roles"
+          description="Roles aligned with your profile"
         />
         <MetricCard
           title="Applications"
           value={applications.length}
           icon={FileText}
-          description="Submissions tracked"
+          description="Applications currently tracked"
         />
         <MetricCard
           title="Interviews"
-          value={pipeline.interview.length || 1}
+          value={interviewCount}
           icon={Calendar}
-          description="Scheduled briefings"
+          description="Interview-stage applications"
         />
         <MetricCard
-          title="Profile Score"
-          value="85/100"
+          title="Resume score"
+          value={`${Math.round(profileScore)}/100`}
           icon={Award}
-          description="ATS compatibility rating"
+          description="Latest ATS compatibility score"
         />
-      </div>
+      </section>
 
-      {/* AI Career Insight Panel */}
-      <Card className="border-indigo-500/10 bg-gradient-to-br from-brand-surface1 via-brand-surface1 to-indigo-500/5 p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full filter blur-xl pointer-events-none" />
-        
-        <div className="flex items-center gap-2 border-b border-brand-border/60 pb-3">
-          <div className="p-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">AI Career Target Recommendation</h4>
-        </div>
-
-        <div className="mt-4 space-y-4 text-xs">
-          <div>
-            <h3 className="text-sm font-extrabold text-indigo-400 tracking-tight leading-snug">
-              "Your strongest market opportunity is Python backend engineering."
-            </h3>
-            <p className="text-slate-400 mt-1 leading-relaxed">
-              Based on your parsed history, your core strengths align with system architecture, REST microservices development, and backend state databases.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-3.5 border-t border-brand-border/40">
-            {/* Matched Roles */}
+      <section className="rounded-[28px] border border-[#E5E5EA] bg-white shadow-[0_12px_32px_rgba(40,35,65,0.05)]">
+        <div className="border-b border-[#EEEEF1] px-6 py-5 sm:px-7">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="font-bold text-indigo-400 uppercase text-[9px] tracking-wider block mb-2">Matched Roles</span>
-              <ul className="space-y-1.5 text-[11px] text-slate-300 font-bold">
-                <li>• Python Backend Engineer</li>
-                <li>• FastAPI Microservices Developer</li>
-                <li>• Django System Architect</li>
-              </ul>
-            </div>
-
-            {/* Missing Skills */}
-            <div>
-              <span className="font-bold text-rose-400 uppercase text-[9px] tracking-wider block mb-2">Missing Skills</span>
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="error" className="text-[8px]">Kubernetes</Badge>
-                <Badge variant="error" className="text-[8px]">Redis Cache</Badge>
-                <Badge variant="error" className="text-[8px]">AWS Lambda</Badge>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6E5AE6]">
+                  <Sparkles className="h-4.5 w-4.5" strokeWidth={1.8} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8A8A91]">
+                    Personalized guidance
+                  </p>
+                  <h2 className="mt-1 text-[18px] font-bold tracking-[-0.02em] text-[#1D1D1F]">
+                    Your next career move
+                  </h2>
+                </div>
               </div>
             </div>
+            <span className="inline-flex w-fit items-center rounded-full border border-[#E7E2F8] bg-[#FAF9FF] px-3 py-1.5 text-[10px] font-semibold text-[#6E5AE6]">
+              High-value focus
+            </span>
+          </div>
+        </div>
 
-            {/* Recommended Actions */}
-            <div>
-              <span className="font-bold text-emerald-400 uppercase text-[9px] tracking-wider block mb-2">Recommended Actions</span>
-              <ul className="space-y-1.5 text-[11px] text-slate-400">
-                <li className="flex gap-1.5 items-start">
-                  <ArrowRight className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
-                  <span>Build a microservices caching sandbox using Redis.</span>
-                </li>
-                <li className="flex gap-1.5 items-start">
-                  <ArrowRight className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
-                  <span>Acquire AWS Associate Developer credential.</span>
-                </li>
-              </ul>
+        <div className="grid md:grid-cols-3">
+          <div className="border-b border-[#EEEEF1] px-6 py-6 md:border-b-0 md:border-r sm:px-7">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6E5AE6]">
+              Best-fit roles
+            </p>
+            <h3 className="mt-3 text-[20px] font-bold tracking-[-0.025em] text-[#1D1D1F]">
+              Python backend engineering
+            </h3>
+            <p className="mt-2 text-[12px] leading-5 text-[#6E6E73]">
+              Your current profile points strongly toward backend, API, and system-building roles.
+            </p>
+            <div className="mt-5 space-y-2.5 text-[12px] font-medium text-[#4A4A50]">
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#34A853]" /> Python Backend Engineer</div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#34A853]" /> FastAPI Developer</div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#34A853]" /> Django Backend Engineer</div>
+            </div>
+          </div>
+
+          <div className="border-b border-[#EEEEF1] px-6 py-6 md:border-b-0 md:border-r sm:px-7">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#C9342C]">
+              Skills to strengthen
+            </p>
+            <h3 className="mt-3 text-[20px] font-bold tracking-[-0.025em] text-[#1D1D1F]">
+              Close the gaps that matter
+            </h3>
+            <p className="mt-2 text-[12px] leading-5 text-[#6E6E73]">
+              Prioritize practical platform skills that can make your backend profile more production-ready.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Badge variant="error">Kubernetes</Badge>
+              <Badge variant="error">Redis</Badge>
+              <Badge variant="error">AWS Lambda</Badge>
+            </div>
+          </div>
+
+          <div className="px-6 py-6 sm:px-7">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#248A3D]">
+              Recommended actions
+            </p>
+            <h3 className="mt-3 text-[20px] font-bold tracking-[-0.025em] text-[#1D1D1F]">
+              Make the next step visible
+            </h3>
+            <div className="mt-4 space-y-3 text-[12px] leading-5 text-[#5D5D64]">
+              <div className="flex gap-2.5">
+                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[#6E5AE6]" />
+                <span>Build one production-style Redis caching project.</span>
+              </div>
+              <div className="flex gap-2.5">
+                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[#6E5AE6]" />
+                <span>Add measurable outcomes to your strongest resume bullets.</span>
+              </div>
             </div>
           </div>
         </div>
-      </Card>
+      </section>
 
-      {/* Recommended Jobs Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-350 uppercase tracking-wider">Recommended Opportunities</h3>
-          <Link to="/seeker/jobs" className="text-xs font-semibold text-indigo-400 hover:text-indigo-350 hover:underline">
-            View all jobs
+      <section className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8A8A91]">
+              Recommended opportunities
+            </p>
+            <h2 className="mt-1 text-[25px] font-bold tracking-[-0.03em] text-[#1D1D1F]">
+              Roles worth your attention
+            </h2>
+          </div>
+          <Link
+            to="/seeker/jobs"
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#6E5AE6]"
+          >
+            Explore all jobs
+            <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {recommendedJobs.length > 0 ? (
-            recommendedJobs.map((job) => (
-              <Card key={job.id} hoverEffect className="flex flex-col justify-between h-full bg-brand-surface1/60 text-xs">
-                <div>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-bold text-slate-205">{job.title}</h4>
-                      <p className="text-[10px] text-indigo-400 font-bold mt-0.5">{job.company_name}</p>
-                    </div>
-                    <span className="font-bold text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-2 py-0.5 rounded-full">
-                      92% Match
-                    </span>
-                  </div>
+            recommendedJobs.map((job) => {
+              const saved = savedJobs.includes(job.id);
+              const skills = (job.skills_needed || []).slice(0, 3);
 
-                  <div className="flex items-center gap-3 text-slate-450 mt-3 font-semibold text-[10px] uppercase tracking-wider">
-                    <span>{job.location}</span>
-                    <span>•</span>
-                    <span>{job.salary_range || 'Disclosed'}</span>
-                  </div>
-
-                  {/* Skills tags summary */}
-                  <div className="mt-3.5 space-y-1.5">
-                    <div>
-                      <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Matched:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {job.skills_needed.slice(0, 3).map((s, i) => (
-                          <Badge key={i} variant="success" className="text-[8px]">{s}</Badge>
-                        ))}
+              return (
+                <Card
+                  key={job.id}
+                  hoverEffect
+                  className="flex h-full flex-col justify-between rounded-[24px] border-[#E5E5EA] bg-white p-0 shadow-[0_8px_24px_rgba(0,0,0,0.035)]"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8A8A91]">
+                          {job.company_name}
+                        </p>
+                        <h3 className="mt-2 line-clamp-2 text-[18px] font-bold leading-6 tracking-[-0.02em] text-[#1D1D1F]">
+                          {job.title}
+                        </h3>
                       </div>
+                      <span className="shrink-0 rounded-full border border-[#DCEEDB] bg-[#F2FAF2] px-2.5 py-1 text-[10px] font-bold text-[#248A3D]">
+                        92% match
+                      </span>
                     </div>
-                    {job.requirements && job.requirements.length > 0 && (
-                      <div>
-                        <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Gaps:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="error" className="text-[8px]">AWS Cloud</Badge>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className="mt-5 pt-3.5 border-t border-brand-border/40 flex items-center justify-between gap-3">
-                  <button
-                    onClick={() => handleSaveJob(job.id)}
-                    className="p-2 border border-brand-border rounded-xl text-slate-400 hover:text-white transition hover:bg-brand-surface2"
-                  >
-                    <Bookmark className={`w-3.5 h-3.5 ${savedJobs.includes(job.id) ? 'fill-indigo-400 text-indigo-400' : ''}`} />
-                  </button>
-                  <button
-                    onClick={() => handleApplyJob(job.id)}
-                    className="flex-1 py-2 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl transition text-center shadow shadow-indigo-500/10"
-                  >
-                    Apply Instantly
-                  </button>
-                </div>
-              </Card>
-            ))
+                    <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-medium text-[#6E6E73]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" strokeWidth={1.8} />
+                        {job.location || 'Flexible'}
+                      </span>
+                      <span>{job.work_mode || 'Flexible work'}</span>
+                      <span>{job.salary_range || 'Salary disclosed in role'}</span>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-1.5">
+                      {skills.length > 0 ? (
+                        skills.map((skill) => (
+                          <Badge key={skill} variant="success" className="text-[9px]">
+                            {skill}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-[11px] text-[#8A8A91]">Skills not listed</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 border-t border-[#EEEEF1] p-4">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveJob(job.id)}
+                      aria-label={saved ? 'Remove saved job' : 'Save job'}
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition ${
+                        saved
+                          ? 'border-[#D9D2FF] bg-[#F5F2FF] text-[#6E5AE6]'
+                          : 'border-[#E2E2E7] bg-white text-[#6E6E73] hover:bg-[#F8F8FA] hover:text-[#1D1D1F]'
+                      }`}
+                    >
+                      <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} strokeWidth={1.8} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyJob(job.id)}
+                      disabled={applyingJobId === job.id}
+                      className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[#1D1D1F] px-4 text-[11px] font-semibold text-white transition hover:bg-[#303035] disabled:cursor-not-allowed disabled:opacity-55"
+                    >
+                      {applyingJobId === job.id ? 'Submitting...' : 'Apply now'}
+                    </button>
+                  </div>
+                </Card>
+              );
+            })
           ) : (
-            <div className="col-span-3 text-center py-6 bg-brand-surface1/60 rounded-2xl border border-brand-border">
-              <p className="text-xs text-slate-500">No vacancies parsed.</p>
+            <div className="lg:col-span-3 rounded-[24px] border border-dashed border-[#DCDCE1] bg-white px-6 py-12 text-center">
+              <Briefcase className="mx-auto h-8 w-8 text-[#A1A1A6]" strokeWidth={1.7} />
+              <p className="mt-3 text-[14px] font-semibold text-[#1D1D1F]">No matching roles yet</p>
+              <p className="mt-1 text-[12px] text-[#6E6E73]">Explore the jobs area to find your next opportunity.</p>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Kanban Application Pipeline Section */}
-      <div className="space-y-4 font-sans">
-        <h3 className="text-xs font-bold text-slate-350 uppercase tracking-wider">Application Tracking Pipeline</h3>
-        <div className="flex gap-4 overflow-x-auto pb-3.5 scrollbar-thin lg:grid lg:grid-cols-4 lg:overflow-x-visible lg:pb-0 text-xs">
-          
-          {/* Column 1: Applied */}
-          <div className="bg-brand-surface1/40 border border-brand-border rounded-2xl p-4.5 space-y-3 min-w-[240px] sm:min-w-0">
-            <div className="flex items-center justify-between border-b border-brand-border/50 pb-2">
-              <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Applied</span>
-              <Badge variant="primary">{pipeline.applied.length}</Badge>
-            </div>
-            {pipeline.applied.length > 0 ? (
-              pipeline.applied.map(app => (
-                <div key={app.id} className="bg-brand-surface2/60 border border-brand-border p-3 rounded-xl space-y-1">
-                  <p className="font-bold text-slate-205 truncate">{app.job?.title}</p>
-                  <p className="text-[10px] text-slate-450 truncate">{app.job?.company_name}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-[10px] text-slate-550 italic py-2 text-center">Empty stage</p>
-            )}
-          </div>
-
-          {/* Column 2: Screening */}
-          <div className="bg-brand-surface1/40 border border-brand-border rounded-2xl p-4.5 space-y-3 min-w-[240px] sm:min-w-0">
-            <div className="flex items-center justify-between border-b border-brand-border/50 pb-2">
-              <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Screening</span>
-              <Badge variant="warning">{pipeline.screening.length + 1}</Badge>
-            </div>
-            <div className="bg-brand-surface2/60 border border-brand-border p-3 rounded-xl space-y-1">
-              <p className="font-bold text-slate-205 truncate">Full-Stack developer</p>
-              <p className="text-[10px] text-slate-455 truncate">PixelCraft Technologies</p>
-            </div>
-            {pipeline.screening.map(app => (
-              <div key={app.id} className="bg-brand-surface2/60 border border-brand-border p-3 rounded-xl space-y-1">
-                <p className="font-bold text-slate-205 truncate">{app.job?.title}</p>
-                <p className="text-[10px] text-slate-450 truncate">{app.job?.company_name}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Column 3: Interview */}
-          <div className="bg-brand-surface1/40 border border-brand-border rounded-2xl p-4.5 space-y-3 min-w-[240px] sm:min-w-0">
-            <div className="flex items-center justify-between border-b border-brand-border/50 pb-2">
-              <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Interview</span>
-              <Badge variant="info">{pipeline.interview.length + 1}</Badge>
-            </div>
-            <div className="bg-brand-surface2/60 border border-brand-border p-3 rounded-xl space-y-1">
-              <p className="font-bold text-slate-205 truncate">Python Backend Architect</p>
-              <p className="text-[10px] text-slate-455 truncate">ByteScale Systems</p>
-            </div>
-            {pipeline.interview.map(app => (
-              <div key={app.id} className="bg-brand-surface2/60 border border-brand-border p-3 rounded-xl space-y-1">
-                <p className="font-bold text-slate-205 truncate">{app.job?.title}</p>
-                <p className="text-[10px] text-slate-450 truncate">{app.job?.company_name}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Column 4: Offer */}
-          <div className="bg-brand-surface1/40 border border-brand-border rounded-2xl p-4.5 space-y-3 min-w-[240px] sm:min-w-0">
-            <div className="flex items-center justify-between border-b border-brand-border/50 pb-2">
-              <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Offer</span>
-              <Badge variant="success">{pipeline.offer.length}</Badge>
-            </div>
-            {pipeline.offer.length > 0 ? (
-              pipeline.offer.map(app => (
-                <div key={app.id} className="bg-brand-surface2/60 border border-brand-border p-3 rounded-xl space-y-1">
-                  <p className="font-bold text-slate-205 truncate">{app.job?.title}</p>
-                  <p className="text-[10px] text-slate-450 truncate">{app.job?.company_name}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-[10px] text-slate-550 italic py-2 text-center">No offers pending</p>
-            )}
-          </div>
-
+      <section className="space-y-4">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8A8A91]">
+            Application pipeline
+          </p>
+          <h2 className="mt-1 text-[25px] font-bold tracking-[-0.03em] text-[#1D1D1F]">
+            Keep every application moving
+          </h2>
         </div>
-      </div>
 
-      {/* Recent Activity Section */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-bold text-slate-355 uppercase tracking-wider">Recent Activity Logs</h3>
-        <Card className="bg-brand-surface1/60 p-5 space-y-4">
-          <div className="space-y-3 text-xs">
-            <div className="flex items-start gap-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Application Submitted</p>
-                <p className="text-[10px] text-slate-450 mt-0.5">Applied to Python Backend Architect vacancy at ByteScale Systems. Fit Score: 92%</p>
-              </div>
-            </div>
+        <div className="grid gap-4 lg:grid-cols-4">
+          {statusConfig.map((column) => {
+            const items = statusApplications(column.key);
 
-            <div className="flex items-start gap-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Resume Analyzed</p>
-                <p className="text-[10px] text-slate-450 mt-0.5">Uploaded resume scanned. 14 technical skills extracted, including FastAPI, React, and PostgreSQL.</p>
-              </div>
-            </div>
+            return (
+              <div
+                key={column.key}
+                className="min-h-[210px] rounded-[22px] border border-[#E5E5EA] bg-[#FAFAFC] p-4"
+              >
+                <div className="flex items-center justify-between border-b border-[#E9E9ED] pb-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: column.color }}
+                    />
+                    <span className="text-[12px] font-semibold text-[#3F3F45]">{column.label}</span>
+                  </div>
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[10px] font-bold"
+                    style={{ color: column.color, backgroundColor: column.background }}
+                  >
+                    {items.length}
+                  </span>
+                </div>
 
-            <div className="flex items-start gap-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Interview Scheduled</p>
-                <p className="text-[10px] text-slate-450 mt-0.5">Recruiter booked a technical evaluation meeting for FastAPI developer role at AI Solutions on 2026-08-28.</p>
+                <div className="mt-3 space-y-2.5">
+                  {items.length > 0 ? (
+                    items.map((application) => (
+                      <div
+                        key={application.id}
+                        className="rounded-2xl border bg-white p-3.5 shadow-[0_5px_15px_rgba(0,0,0,0.03)]"
+                        style={{ borderColor: column.border }}
+                      >
+                        <p className="truncate text-[12px] font-semibold text-[#1D1D1F]">
+                          {application.job?.title || 'Application'}
+                        </p>
+                        <p className="mt-1 truncate text-[10px] text-[#77777D]">
+                          {application.job?.company_name || 'Company'}
+                        </p>
+                        <div className="mt-3 flex items-center justify-between text-[10px] text-[#8A8A91]">
+                          <span>{Math.round(application.match_score)}% match</span>
+                          <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.8} />
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-[#DCDCE1] px-3 py-8 text-center text-[11px] italic text-[#96969C]">
+                      Nothing here yet
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            );
+          })}
+        </div>
+      </section>
 
-            <div className="flex items-start gap-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Profile Updated</p>
-                <p className="text-[10px] text-slate-450 mt-0.5">Career transition parameters calibrated for "Senior Full-Stack Engineer" settings.</p>
-              </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => navigate('/seeker/resume-intelligence')}
+          className="group rounded-[24px] border border-[#E5E5EA] bg-white p-5 text-left shadow-[0_8px_24px_rgba(0,0,0,0.035)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(0,0,0,0.06)]"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6E5AE6]">
+              <FileText className="h-5 w-5" strokeWidth={1.8} />
             </div>
+            <ArrowRight className="h-5 w-5 text-[#A1A1A6] transition group-hover:translate-x-1 group-hover:text-[#6E5AE6]" strokeWidth={1.8} />
           </div>
-        </Card>
-      </div>
+          <h3 className="mt-5 text-[17px] font-bold text-[#1D1D1F]">Improve your resume</h3>
+          <p className="mt-1.5 text-[12px] leading-5 text-[#6E6E73]">
+            Run the ATS analyzer, inspect weak bullets, and turn the score into concrete edits.
+          </p>
+        </button>
 
+        <button
+          type="button"
+          onClick={() => navigate('/seeker/career-insights')}
+          className="group rounded-[24px] border border-[#E5E5EA] bg-white p-5 text-left shadow-[0_8px_24px_rgba(0,0,0,0.035)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(0,0,0,0.06)]"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F5F8FF] text-[#0071E3]">
+              <Target className="h-5 w-5" strokeWidth={1.8} />
+            </div>
+            <ArrowRight className="h-5 w-5 text-[#A1A1A6] transition group-hover:translate-x-1 group-hover:text-[#0071E3]" strokeWidth={1.8} />
+          </div>
+          <h3 className="mt-5 text-[17px] font-bold text-[#1D1D1F]">Tune your career direction</h3>
+          <p className="mt-1.5 text-[12px] leading-5 text-[#6E6E73]">
+            Review role fit, missing skills, and the next projects that strengthen your profile.
+          </p>
+        </button>
+      </div>
     </div>
   );
 };
