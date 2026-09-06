@@ -17,9 +17,7 @@ export const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
-  const [role, setRole] = useState<'JOB_SEEKER' | 'RECRUITER'>(
-    'JOB_SEEKER'
-  );
+  const [role, setRole] = useState<'JOB_SEEKER' | 'RECRUITER'>('JOB_SEEKER');
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -34,7 +32,7 @@ export const Register: React.FC = () => {
     if (!password) {
       return {
         label: 'Empty',
-        color: 'bg-slate-800',
+        color: 'bg-[#D2D2D7]',
         width: 'w-0',
       };
     }
@@ -51,12 +49,7 @@ export const Register: React.FC = () => {
     const hasUpper = /[A-Z]/.test(password);
     const hasSpecial = /[^A-Za-z0-9]/.test(password);
 
-    if (
-      password.length >= 10 &&
-      hasNumber &&
-      hasUpper &&
-      hasSpecial
-    ) {
+    if (password.length >= 10 && hasNumber && hasUpper && hasSpecial) {
       return {
         label: 'Strong',
         color: 'bg-emerald-500',
@@ -173,22 +166,19 @@ export const Register: React.FC = () => {
 
   return (
     <AuthLayout>
-      <h2 className="text-xl font-extrabold text-slate-100 tracking-tight text-center mb-6">
+      <h2 className="text-xl font-extrabold text-brand-text tracking-tight text-center mb-6">
         Create your ApplyRight account
       </h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl font-medium leading-relaxed">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl font-medium leading-relaxed">
           {error}
         </div>
       )}
 
       {step === 1 ? (
-        <form
-          onSubmit={handleNextStep}
-          className="space-y-4"
-        >
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+        <form onSubmit={handleNextStep} className="space-y-4">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-brand-muted mb-2">
             Step 1: Choose account type
           </label>
 
@@ -199,21 +189,21 @@ export const Register: React.FC = () => {
                 setRole('JOB_SEEKER');
                 setError('');
               }}
-              className={`p-4 text-left rounded-xl border transition-all duration-300 flex items-center justify-between ${
+              className={`p-4 text-left rounded-2xl border transition-all duration-200 flex items-center justify-between ${
                 role === 'JOB_SEEKER'
-                  ? 'bg-indigo-500/5 border-indigo-500 text-indigo-400 shadow-md shadow-indigo-500/5'
-                  : 'bg-brand-surface2 border-brand-border text-slate-400 hover:text-slate-200'
+                  ? 'bg-brand-accent1/5 border-brand-accent1 text-brand-accent1 shadow-soft'
+                  : 'bg-brand-surface2 border-brand-border text-brand-muted hover:text-brand-text hover:border-[#B8B8BD]'
               }`}
             >
               <div className="flex items-center gap-3">
                 <Briefcase className="w-5 h-5 shrink-0" />
 
                 <div>
-                  <p className="text-xs font-bold">
+                  <p className="text-xs font-bold text-brand-text">
                     Job Seeker
                   </p>
 
-                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                  <p className="text-[10px] text-brand-muted font-semibold mt-0.5">
                     Apply for jobs and review career upskilling paths
                   </p>
                 </div>
@@ -222,12 +212,12 @@ export const Register: React.FC = () => {
               <span
                 className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
                   role === 'JOB_SEEKER'
-                    ? 'border-indigo-500 bg-indigo-500/20'
-                    : 'border-slate-700'
+                    ? 'border-brand-accent1 bg-brand-accent1/20'
+                    : 'border-[#B8B8BD]'
                 }`}
               >
                 {role === 'JOB_SEEKER' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-accent1" />
                 )}
               </span>
             </button>
@@ -238,21 +228,21 @@ export const Register: React.FC = () => {
                 setRole('RECRUITER');
                 setError('');
               }}
-              className={`p-4 text-left rounded-xl border transition-all duration-300 flex items-center justify-between ${
+              className={`p-4 text-left rounded-2xl border transition-all duration-200 flex items-center justify-between ${
                 role === 'RECRUITER'
-                  ? 'bg-indigo-500/5 border-indigo-500 text-indigo-400 shadow-md shadow-indigo-500/5'
-                  : 'bg-brand-surface2 border-brand-border text-slate-400 hover:text-slate-200'
+                  ? 'bg-brand-accent1/5 border-brand-accent1 text-brand-accent1 shadow-soft'
+                  : 'bg-brand-surface2 border-brand-border text-brand-muted hover:text-brand-text hover:border-[#B8B8BD]'
               }`}
             >
               <div className="flex items-center gap-3">
                 <Cpu className="w-5 h-5 shrink-0" />
 
                 <div>
-                  <p className="text-xs font-bold">
+                  <p className="text-xs font-bold text-brand-text">
                     Recruiter
                   </p>
 
-                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                  <p className="text-[10px] text-brand-muted font-semibold mt-0.5">
                     Post openings and rank applicants semantically
                   </p>
                 </div>
@@ -261,12 +251,12 @@ export const Register: React.FC = () => {
               <span
                 className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
                   role === 'RECRUITER'
-                    ? 'border-indigo-500 bg-indigo-500/20'
-                    : 'border-slate-700'
+                    ? 'border-brand-accent1 bg-brand-accent1/20'
+                    : 'border-[#B8B8BD]'
                 }`}
               >
                 {role === 'RECRUITER' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-accent1" />
                 )}
               </span>
             </button>
@@ -274,19 +264,16 @@ export const Register: React.FC = () => {
 
           <Button
             type="submit"
-            className="w-full mt-4 py-2.5 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg"
+            className="w-full mt-4 py-2.5 font-bold text-xs flex items-center justify-center gap-1.5"
           >
             Next Step
             <ArrowRight className="w-4 h-4" />
           </Button>
         </form>
       ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
-          <div className="flex items-center justify-between border-b border-brand-border/60 pb-2 mb-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex items-center justify-between border-b border-brand-border pb-2 mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-muted">
               Step 2: Enter Details
             </span>
 
@@ -296,7 +283,7 @@ export const Register: React.FC = () => {
                 setStep(1);
                 setError('');
               }}
-              className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1"
+              className="text-[10px] font-bold text-brand-accent1 hover:text-[#5646C7] flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Role selection
@@ -343,17 +330,12 @@ export const Register: React.FC = () => {
 
           {password && (
             <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                <span>
-                  Strength: {strength.label}
-                </span>
-
-                <span>
-                  {password.length}/128
-                </span>
+              <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider text-brand-muted">
+                <span>Strength: {strength.label}</span>
+                <span>{password.length}/128</span>
               </div>
 
-              <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-1 bg-[#E5E5EA] rounded-full overflow-hidden">
                 <div
                   className={`h-full ${strength.color} ${strength.width} transition-all duration-300 rounded-full`}
                 />
@@ -366,27 +348,25 @@ export const Register: React.FC = () => {
             type="password"
             required
             value={confirmPassword}
-            onChange={(event) =>
-              setConfirmPassword(event.target.value)
-            }
+            onChange={(event) => setConfirmPassword(event.target.value)}
             placeholder="••••••••"
           />
 
           <Button
             type="submit"
             isLoading={loading}
-            className="w-full mt-4 py-2.5 font-bold text-xs shadow-lg"
+            className="w-full mt-4 py-2.5 font-bold text-xs"
           >
             Create Account
           </Button>
         </form>
       )}
 
-      <p className="mt-6 text-center text-xs text-slate-400 font-medium">
+      <p className="mt-6 text-center text-xs text-brand-muted font-medium">
         Already have an account?{' '}
         <Link
           to="/login"
-          className="font-bold text-indigo-400 hover:text-indigo-300"
+          className="font-bold text-brand-accent1 hover:text-[#5646C7]"
         >
           Sign in
         </Link>
